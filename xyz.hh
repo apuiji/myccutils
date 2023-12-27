@@ -47,7 +47,7 @@ namespace zlt {
 
   template<class T>
   requires (!std::is_reference_v<T>)
-  static inline constexpr auto rtol(T t) noexcept {
+  static inline constexpr auto rtol(T t = T()) noexcept {
     struct U {
       T t;
       operator T &() && noexcept {
