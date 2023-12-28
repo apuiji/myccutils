@@ -27,6 +27,7 @@ namespace zlt {
   static inline auto makeGuard(T &&t) noexcept {
     struct Guard {
       T t;
+      Guard(T &&t) noexcept: t(std::move(t)) {}
       ~Guard() {
         t();
       }
@@ -50,6 +51,7 @@ namespace zlt {
   static inline constexpr auto rtol(T t = T()) noexcept {
     struct U {
       T t;
+      U(T t) noexcept: t(t) {}
       operator T &() && noexcept {
         return t;
       }
@@ -62,6 +64,7 @@ namespace zlt {
   static inline auto rtol(T &&t) noexcept {
     struct U {
       T t;
+      U(T &&t) noexcept: t(std::move(t)) {}
       operator T &() && noexcept {
         return t;
       }
