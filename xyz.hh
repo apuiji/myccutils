@@ -42,7 +42,7 @@ namespace zlt {
   }
 
   template<class T>
-  static inline T remove(T &&t) noexcept {
+  static inline T remove(T &t) noexcept {
     return std::move(t);
   }
 
