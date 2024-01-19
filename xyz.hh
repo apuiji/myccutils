@@ -55,6 +55,9 @@ namespace zlt {
       operator T &() && noexcept {
         return t;
       }
+      operator T *() && noexcept {
+        return &t;
+      }
     };
     return U(t);
   }
@@ -67,6 +70,9 @@ namespace zlt {
       U(T &&t) noexcept: t(std::move(t)) {}
       operator T &() && noexcept {
         return t;
+      }
+      operator T *() && noexcept {
+        return &t;
       }
     };
     return U(std::move(t));
