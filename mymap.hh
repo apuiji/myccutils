@@ -1,21 +1,26 @@
 #pragma once
 
 #include<memory>
-#include"xyz.hh"
+#include"rbtree.hh"
 
 namespace zlt {
-  struct RBTreeNode {
-    RBTreeNode *parent;
-    RBTreeNode *lchd;
-    RBTreeNode *rchd;
-    bool red;
-    RBTreeNode() noexcept: red(true) {}
+  template<class K, class T>
+  struct MyMapNode: std::pair<K, T>, rbtree::Node {
+    MyMapNode(const K &k) noexcept: pair(k, T()) {}
+    MyMapNode(K &&k) noexcept: pair(std::move(k), T()) {}
   };
 
-  template<class K, class T>
-  struct MyMapNode: RBTreeNode, std::pair<K, T> {
-    MyMapNode(const K &k) noexcept: pair(k, T()) {}
-  };
+  template<class K, class T, class Allocator>
+  int clear(MyMapNode<K, T> *node, Allocator &allocator) noexcept {
+    if (!node) [[unlikely]] {
+      return 0;
+    }
+    clear(node->lchd, allocator);
+    clear(node->rchd, allocator);
+    std::destroy(node);
+    allocator.deallocate(node);
+    return 0;
+  }
 
   template<class K, class T, class Comparator = Compare, class Allocator = std::allocator<MyMapNode<K, T>>>
   requires requires (Comparator &&comparator, K &&a, K &&b) {
@@ -29,17 +34,18 @@ namespace zlt {
   template<class K, class T, class Comparator, class Allocator>
   struct MyMap {
     using Node = MyMapNode<K, T>;
-    using Iterator = MyMapIterator<K, T>;
-    Node *root;
     Comparator comparator;
     Allocator allocator;
+    Node *root;
     MyMap(Comparator &&comparator = {}, Allocator &&allocator = {}) noexcept:
     comparator(std::move(comparator)), allocator(std::move(allocator)) {}
-    ~MyMap() noexcept;
-    Iterator begin() {
+    ~MyMap() noexcept {
+      clear(root, allocator);
+    }
+    rbtree::Iterator<Node> begin() const noexcept {
       return mostLeft(root);
     }
-    Iterator end() {
+    rbtree::Iterator<Node> end() const noexcept {
       return {};
     }
     T &operator [](const K &k) {
@@ -47,25 +53,13 @@ namespace zlt {
     }
   };
 
-  template<class K, class T, class Comparator, class Allocator>
-  MyMap<K, T, Comparator, Allocator>::~MyMap() noexcept {
-    auto it = begin();
-    auto end1 = end();
-    while (it != end) {
-      auto next = it.next();
-      std::destroy(it.node);
-      allocator.deallocate(it.node);
-      it = next;
-    }
-  }
-
   template<class K, class T, class Comparator>
   MyMapNode<K, T> *&find(MyMapNode<K, T> *&root, const K &k, const Comparator &comparator) noexcept {
     if (!root) [[unlikely]] {
-      return root;
+      return nullptr;
     }
-    int diff = cmp(k, root->first);
-    return diff ? find(diff < 0 ? root->lchd : root->rchd, k, cmp) : root;
+    int diff = comparator(k, root->first);
+    return diff ? find(root->children[diff > 0], k, comparator) : root;
   }
 
   template<class K, class T, class Comparator, class Allocator>
@@ -81,6 +75,7 @@ namespace zlt {
     }
     node = map.allocator.allocate(1);
     std::construct(node, k);
+    node->parent = containerOf(node, rbtree::Node::);
     afterInsert(node);
     map.root = mostTopNN(node);
     return node;

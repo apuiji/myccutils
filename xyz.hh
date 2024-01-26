@@ -58,6 +58,20 @@ namespace zlt {
     return Guard(std::move(t));
   }
 
+  template<class T, class U>
+  static inline size_t offsetOf(T U::*memb) noexcept {
+    U *p = nullptr;
+    void *q = &(p->*memb);
+    return (size_t) q;
+  }
+
+  template<class T, class U>
+  static inline auto &containerOf(T &t, T U::*memb) noexcept {
+    size_t off = offsetOf(memb);
+    void *p = (char *) &t - off;
+    return *(U *) p;
+  }
+
   /// overloaded function resolve
   template<class R, class ...Args>
   static inline constexpr auto ofr(R (*f)(Args...)) noexcept {

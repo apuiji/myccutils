@@ -1,19 +1,21 @@
 #include"rbtree.hh"
 
-namespace zlt {
-  RBTreeNode *mostLeftNN(RBTreeNode *node) noexcept {
+using namespace std;
+
+namespace zlt::rbtree {
+  Node *mostLeftNN(Node *node) noexcept {
     return node->lchd ? mostLeftNN(node->lchd) : node;
   }
 
-  RBTreeNode *mostRightNN(RBTreeNode *node) noexcept {
+  Node *mostRightNN(Node *node) noexcept {
     return node->rchd ? mostRightNN(node->rchd) : node;
   }
 
-  RBTreeNode *mostTopNN(RBTreeNode *node) noexcept {
+  Node *mostTopNN(Node *node) noexcept {
     return node->parent ? mostTopNN(node->parent) : node;
   }
 
-  RBTreeNode *leftRotate(RBTreeNode *node) noexcept {
+  Node *leftRotate(Node *node) noexcept {
     auto parent = node->parent;
     auto rchd = node->rchd;
     node->parent = rchd;
@@ -26,7 +28,7 @@ namespace zlt {
     return rchd;
   }
 
-  RBTreeNode *rightRotate(RBTreeNode *node) noexcept {
+  Node *rightRotate(Node *node) noexcept {
     auto parent = node->parent;
     auto lchd = node->lchd;
     node->parent = lchd;
@@ -39,18 +41,35 @@ namespace zlt {
     return lchd;
   }
 
-  RBTreeIterator next(const RBTreeIterator &it) noexcept {
-    auto parent = it.node->parent;
-    if (!parent) [[unlikely]] {
-      return nullptr;
+  Node *nextLeft(Node *node) noexcept {
+    if (node->lchd) {
+      return mostRightNN(node->lchd);
     }
-    if (!parent->rchd || it.node == parent->rchd) {
-      return parent;
+    if (node == node->parent->rchd) {
+      return node->parent;
     }
-    return mostLeftNN(parent->rchd);
+    return nullptr;
   }
 
-  int afterInsert(RBTreeNode *node) noexcept {
+  Node *nextRight(Node *node) noexcept {
+    if (node->rchd) {
+      return mostLeftNN(node->rchd);
+    }
+    if (node == node->parent->lchd) {
+      return node->parent;
+    }
+    return nullptr;
+  }
+
+  static int afterInsert1(Node *node) noexcept;
+
+  int afterInsert(Node *&root, Node *node) noexcept {
+    afterInsert1(node);
+    root = mostTopNN(node);
+    return 0;
+  }
+
+  int afterInsert1(Node *node) noexcept {
     auto parent = node->parent;
     // root
     if (!parent) [[unlikely]] {
@@ -66,86 +85,123 @@ namespace zlt {
       parent->red = false;
       uncle->red = false;
       gparent->red = true;
-      return afterInsert(gparent);
+      return afterInsert1(gparent);
     }
-    if (node == parent->lchd) {
-      if (parent == gparent->lchd) {
-        //     GB        PR
-        //    /  \      /  \
-        //   PR  UB -> NB  GB
-        //  / |            | \
-        // NR SB          SB UB
-        rightRotate(gparent);
-        node->red = false;
-        return afterInsert(parent);
-      } else {
-        leftRotate(parent);
-        rightRotate(gparent);
-        parent->red = false;
-        return afterInsert(node);
-      }
+    bool right = node == parent->rchd;
+    if (right == (parent == gparent->rchd)) {
+      //   GB         PB
+      //  /  \       /  \
+      // UB  PR ->  GR  NR
+      //       \   /
+      //       NR UB
+      rotate(gparent, !right);
+      parent->red = false;
+      gparent->red = true;
+      return 0;
     } else {
-      if (parent == gparent->rchd) {
-        leftRotate(gparent);
-        node->red = false;
-        return afterInsert(parent);
-      } else {
-        rightRotate(parent);
-        leftRotate(gparent);
-        parent->red = false;
-        return afterInsert(node);
-      }
+      //   GB        GB        NB
+      //  /  \      /  \      /  \
+      // PR  UB -> NR  UB -> PR  GR
+      //  |       /                \
+      //  NR     PR                UB
+      rotate(parent, !right);
+      rotate(gparent, right);
+      node->red = false;
+      gparent->red = true;
+      return 0;
     }
   }
 
-  int beforeErase(RBTreeNode *node) noexcept {
+  static int beforeErase1(Node *node) noexcept;
+
+  int beforeErase(Node *&root, Node *node) noexcept {
+    if (node->lchd && node->rchd) {
+      swap(*node, *nextRight(node));
+    }
+    beforeErase1(node);
+    auto parent = node->parent;
+    if (parent) {
+      root = mostTopNN(parent);
+      parent->children[node == parent->rchd] = nullptr;
+    } else {
+      root = nullptr;
+    }
+    return 0;
+  }
+
+  static int beforeErase2(Node *node) noexcept;
+
+  int beforeErase1(Node *node) noexcept {
     if (node->red) {
       return 0;
     }
-    auto parent = node->parent;
-    if (!parent) [[unlikely]] {
+    if (node->lchd) {
+      rightRotate(node);
+      node->lchd->red = false;
       return 0;
     }
-    auto sibling = node == parent->lchd ? parent->rchd : parent->lchd;
+    if (node->rchd) {
+      leftRotate(node);
+      node->rchd->red = false;
+      return 0;
+    }
+    return beforeErase2(node);
+  }
+
+  int beforeErase2(Node *node) noexcept {
+    auto parent = node->parent;
+    if (!parent) [[unlikely]] {
+      node->red = false;
+      return 0;
+    }
+    bool right = node == parent->rchd;
+    auto sibling = parent->children[right];
     if (sibling->red) {
-      //   PB       SB
-      //  /  \ ->  /
-      // NB  SR   PR
-      //         /
-      //        NB
-      if (node == parent->lchd) {
-        leftRotate(parent);
-      } else {
-        rightRotate(parent);
-      }
+      //     PB        SB
+      //    /  \      /  \
+      //   SR  NB -> XB  PR
+      //  / |            | \
+      // XB YB          YB NB
+      rotate(parent, right);
       parent->red = true;
       sibling->red = false;
-      return beforeErase(node);
+      return beforeErase2(node);
     }
-    auto x = sibling->lchd;
-    auto y = sibling->rchd;
-    if ((x && x->red) == (y && y->red)) {
-      //   P
-      //  / \
-      // NB SB
-      //    | \
-      //   XR YR
-      sibling->red = true;
+    if (auto x = sibling->children[!right]; x && x->red) {
+      //     P?        S?
+      //    /  \      /  \
+      //   SB  NB -> XB  PB
+      //  /                \
+      // XR                NB
+      rotate(parent, right);
+      sibling->red = parent->red;
+      parent->red = false;
       x->red = false;
-      y->red = false;
-      if (parent->red) {
-        parent->red = false;
-        return 0;
-      } else {
-        return beforeErase(parent);
-      }
+      return 0;
     }
-    if (node == parent->lchd) {
-      //   PR         SB
-      //  /  \       /  \
-      // NB  SB  -> PR  YR
-      //     | \   / |
-      //    XB YR NB XB
+    if (auto y = sibling->children[right]; y && y->red) {
+      //   P?        P?        Y?
+      //  /  \      /  \      /  \
+      // SB  NB -> YR  NB -> SB  PB
+      //  |       /                \
+      //  YR     SB                NB
+      rotate(sibling, !right);
+      rotate(parent, right);
+      y->red = parent->red;
+      parent->red = false;
+      return 0;
+    }
+    //     P?        PB
+    //    /  \      /  \
+    //   SB  NB -> SR  NB
+    //  / |       / |
+    // XB YB     XB YB
+    sibling->red = true;
+    if (parent->red) {
+      parent->red = false;
+      return 0;
+    } else {
+      return beforeErase2(parent);
     }
   }
 }
