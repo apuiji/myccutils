@@ -8,6 +8,7 @@ namespace zlt {
     inline int operator ()(T &&t, U &&u) const noexcept {
       return t < u ? -1 : t > u ? 1 : 0;
     }
+    /// @return comparable
     template<class T, class U>
     inline bool operator ()(int &dest, T &&t, U &&u) const noexcept {
       if (t < u) {
@@ -56,20 +57,6 @@ namespace zlt {
       }
     };
     return Guard(std::move(t));
-  }
-
-  template<class T, class U>
-  static inline size_t offsetOf(T U::*memb) noexcept {
-    U *p = nullptr;
-    void *q = &(p->*memb);
-    return (size_t) q;
-  }
-
-  template<class T, class U>
-  static inline auto &containerOf(T &t, T U::*memb) noexcept {
-    size_t off = offsetOf(memb);
-    void *p = (char *) &t - off;
-    return *(U *) p;
   }
 
   /// overloaded function resolve
