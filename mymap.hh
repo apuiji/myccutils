@@ -3,131 +3,136 @@
 #include"rbtree.hh"
 #include"xyz.hh"
 
-namespace zlt {
+namespace zlt::mymap {
   template<class K, class T>
-  struct MyMapNode: rbtree::Node, std::pair<K, T> {
-    using Pair = std::pair<K, T>;
-    MyMapNode(const K &k): Pair(k, T()) {}
-    MyMapNode(K &&k) noexcept: Pair(std::move(k), T()) {}
+  struct Node: rbtree::Node, std::pair<K, T> {
+    Node(const K &k): std::pair<K, T>(k, T()) {}
+    Node(K &&k) noexcept: std::pair<K, T>(std::move(k), T()) {}
   };
 
   template<class K, class T>
-  int clean(MyMapNode<K, T> *node) noexcept {
+  int clean(Node<K, T> *node) noexcept {
     if (!node) [[unlikely]] {
       return 0;
     }
-    clean(node->lchild);
-    clean(node->rchild);
+    clean(static_cast<Node<K, T> *>(node->lchild));
+    clean(static_cast<Node<K, T> *>(node->rchild));
     delete node;
     return 0;
   }
 
   template<class K, class T, class Comp, class U>
-  MyMapNode<K, T> *find(MyMapNode<K, T> *node, const Comp &comp, const U &u) noexcept {
+  Node<K, T> *find(Node<K, T> *node, const Comp &comp, U &&u) noexcept {
     if (!node) [[unlikely]] {
       return nullptr;
     }
-    int diff = comp(u, node->first);
+    int diff = comp(std::forward<U>(u), node->first);
     if (diff) {
       auto next = node->children[diff > 0];
-      return find(static_cast<MyMapNode<K, T> *>(next), comp, u);
+      return find(static_cast<Node<K, T> *>(next), comp, std::forward<U>(u));
     } else {
       return node;
     }
   }
 
   template<class K, class T, class Comp, class U>
-  static inline const MyMapNode<K, T> *find(const MyMapNode<K, T> *node, const Comp &comp, const U &u) noexcept {
-    return find(const_cast<MyMapNode<K, T> *>(node), comp, u);
+  static inline const Node<K, T> *find(const Node<K, T> *node, const Comp &comp, U &&u) noexcept {
+    return find(const_cast<Node<K, T> *>(node), comp, std::forward<U>(u));
   }
 
   /// @param[out] parent initialized by null, the parent node of found
   /// @return not null when already exists
   template<class K, class T, class Comp, class U>
-  MyMapNode<K, T> *&findToInsert(rbtree::Node *&parent, MyMapNode<K, T> *&node, const Comp &comp, const U &u) noexcept {
+  rbtree::Node *&findToInsert(rbtree::Node *&parent, rbtree::Node *&node, const Comp &comp, U &&u) noexcept {
     if (!node) [[unlikely]] {
       return node;
     }
-    int diff = comp(u, node->first);
+    int diff = comp(std::forward<U>(u), static_cast<Node<K, T> *>(node)->first);
     if (diff) {
       parent = node;
       auto &next = node->children[diff > 0];
-      return findToInsert(parent, static_cast<MyMapNode<K, T> *&>(next), comp, u);
+      return findToInsert<K, T>(parent, next, comp, std::forward<U>(u));
     } else {
       return node;
     }
   }
 
-  template<class K, class T, class Comp, class U, class V>
-  MyMapNode<K, T> *insert(MyMapNode<K, T> *&node, const Comp &comp, const U &u, V &&v) {
+  template<class K, class T, class Comp, class U>
+  Node<K, T> *insert(Node<K, T> *&node, const Comp &comp, U &&u) {
     rbtree::Node *parent = nullptr;
-    auto &a = findToInsert(parent, node, comp, u);
+    auto &a = findToInsert(parent, node, comp, std::forward<U>(u));
     if (!a) {
-      a = new MyMapNode<K, T>(std::forward<V>(v));
+      a = new Node<K, T>(std::forward<U>(u));
       a->parent = parent;
     }
     return a;
   }
 
-  template<class K, class T, class Comp, class U>
-  MyMapNode<K, T> *insert(MyMapNode<K, T> *&node, const Comp &comp, U &&u) {
-    return insert(node, comp, u, std::forward<U>(u));
+  template<class K, class T, class Comp, class U, class V>
+  Node<K, T> *insert(rbtree::Node *&node, const Comp &comp, U &&u, V &&v) {
+    rbtree::Node *parent = nullptr;
+    auto &a = findToInsert<K, T>(parent, node, comp, std::forward<U>(u));
+    if (!a) {
+      a = new Node<K, T>(std::forward<V>(v));
+      a->parent = parent;
+    }
+    return static_cast<Node<K, T> *>(a);
   }
 
+  template<class K, class T, bool Right>
+  using Iterator = rbtree::Iterator<Node<K, T>, Right>;
+
   template<class K, class T, class Comp = Compare>
-  struct MyMap {
-    using Node = MyMapNode<K, T>;
-    template<bool Right>
-    using Iterator = rbtree::Iterator<Node, Right>;
+  struct Map {
     Comp comp;
-    Node *root;
-    MyMap(Comp &&comp = {}) noexcept: comp(std::move(comp)) {}
-    ~MyMap() noexcept {
-      clean(root);
+    rbtree::Node *root;
+    Map(Comp &&comp = {}) noexcept: comp(std::move(comp)) {}
+    ~Map() noexcept {
+      clean(static_cast<Node<K, T> *>(root));
     }
-    Iterator<true> begin() const noexcept {
+    Iterator<K, T, true> begin() const noexcept {
       if (root) {
         return mostLeft(root);
       } else {
         return {};
       }
     }
-    Iterator<true> end() const noexcept {
+    Iterator<K, T, true> end() const noexcept {
       return {};
     }
-    Iterator<false> rbegin() const noexcept {
+    Iterator<K, T, false> rbegin() const noexcept {
       if (root) {
         return mostRight(root);
       } else {
         return {};
       }
     }
-    Iterator<false> rend() const noexcept {
+    Iterator<K, T, false> rend() const noexcept {
       return {};
     }
     template<class U>
     T &operator [](U &&u) {
-      return insert(root, comp, std::forward<U>(u))->second;
+      return insert<K, T>(root, comp, std::forward<U>(u))->second;
     }
   };
 
   template<class K, class T, class Comp, class U>
-  static inline auto find(MyMap<K, T, Comp> &m, const U &u) noexcept {
-    return find(m.root, m.comp, u);
+  static inline Node<K, T> *find(Map<K, T, Comp> &m, U &&u) noexcept {
+    return find(static_cast<Node<K, T> *>(m.root), m.comp, std::forward<U>(u));
   }
 
   template<class K, class T, class Comp, class U>
-  static inline auto find(const MyMap<K, T, Comp> &m, const U &u) noexcept {
-    return find(m.root, m.comp, u);
+  static inline const Node<K, T> *find(const Map<K, T, Comp> &m, U &&u) noexcept {
+    return find(static_cast<const Node<K, T> *>(m.root), m.comp, std::forward<U>(u));
+  }
+
+  template<class K, class T, class Comp, class U>
+  static inline auto insert(Map<K, T, Comp> &m, U &&u) {
+    return insert<K, T>(m.root, m.comp, std::forward<U>(u));
   }
 
   template<class K, class T, class Comp, class U, class V>
-  static inline auto insert(MyMap<K, T, Comp> &m, const U &u, V &&v) {
-    return insert(m.root, m.comp, u, std::forward<V>(v));
-  }
-
-  template<class K, class T, class Comp, class U>
-  static inline auto insert(MyMap<K, T, Comp> &m, U &&u) {
-    return insert(m.root, m.comp, u, std::forward<U>(u));
+  static inline auto insert(Map<K, T, Comp> &m, U &&u, V &&v) {
+    return insert<K, T>(m.root, m.comp, std::forward<U>(u), std::forward<V>(v));
   }
 }
