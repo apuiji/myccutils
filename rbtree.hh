@@ -68,10 +68,10 @@ namespace zlt::rbtree {
   struct Iterator {
     Node *node;
     Iterator(Node *node = nullptr) noexcept: node(node) {}
-    bool operator ==()(Iterator<T, Right> it) const noexcept {
+    bool operator ==(Iterator<T, Right> it) const noexcept {
       return node == it.node;
     }
-    bool operator !=()(Iterator<T, Right> it) const noexcept {
+    bool operator !=(Iterator<T, Right> it) const noexcept {
       return node != it.node;
     }
     T &operator *() const noexcept {
