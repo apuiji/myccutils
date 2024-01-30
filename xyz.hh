@@ -59,6 +59,21 @@ namespace zlt {
     return Guard(std::move(t));
   }
 
+  template<std::invocable T>
+  static inline auto makeGuard(T &&t, bool &on) noexcept {
+    struct Guard {
+      T t;
+      bool &on;
+      Guard(T &&t, bool &on) noexcept: t(std::move(t)), on(on) {}
+      ~Guard() {
+        if (on) {
+          t();
+        }
+      }
+    };
+    return Guard(std::move(t), on);
+  }
+
   /// overloaded function resolve
   template<class R, class ...Args>
   static inline constexpr auto ofr(R (*f)(Args...)) noexcept {
