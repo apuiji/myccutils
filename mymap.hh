@@ -58,14 +58,14 @@ namespace zlt::mymap {
   }
 
   template<class K, class T, class Comp, class U>
-  Node<K, T> *insert(Node<K, T> *&node, const Comp &comp, U &&u) {
+  Node<K, T> *insert(rbtree::Node *&node, const Comp &comp, U &&u) {
     rbtree::Node *parent = nullptr;
-    auto &a = findToInsert(parent, node, comp, std::forward<U>(u));
+    auto &a = findToInsert<K, T>(parent, node, comp, std::forward<U>(u));
     if (!a) {
       a = new Node<K, T>(std::forward<U>(u));
       a->parent = parent;
     }
-    return a;
+    return static_cast<Node<K, T> *>(a);
   }
 
   template<class K, class T, class Comp, class U, class V>
