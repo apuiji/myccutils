@@ -1,3 +1,3 @@
 PROD := libmyccutils.a
-HHS := mymap rbtree xyz
+HHS := dl mymap rbtree xyz
 OBJS := rbtree
