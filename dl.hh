@@ -39,6 +39,11 @@ namespace zlt::dl {
     return 0;
   }
 
+  template<class T>
+  static inline T *symbol(DL dl, const char *name) noexcept {
+    return (T *) GetProcAddress(dl, name);
+  }
+
   template<class R, class ...Args>
   static inline auto funct(DL dl, const char *name) noexcept {
     return (R (*)(Args...)) GetProcAddress(dl, name);
@@ -56,17 +61,17 @@ namespace zlt::dl {
   defRTLD(NOW);
   #undef defRTLD
 
-  static inline DL open(const char *file, int flags = LAZY | LOCAL) noexcept {
+  static inline DL open(const char *file, int flags = LAZY | GLOBAL) noexcept {
     return dlopen(file, flags);
   }
 
-  static inline DL open(const wchar_t *file, int flags = LAZY | LOCAL) noexcept {
+  static inline DL open(const wchar_t *file, int flags = LAZY | GLOBAL) noexcept {
     std::filesystem::path path(file);
     return open(path.string().data(), flags);
   }
 
   template<class C>
-  static inline DL open(const std::basic_string<C> &file, int flags = LAZY | LOCAL) noexcept {
+  static inline DL open(const std::basic_string<C> &file, int flags = LAZY | GLOBAL) noexcept {
     return open(file.data(), flags);
   }
 
@@ -74,11 +79,21 @@ namespace zlt::dl {
     return dlclose(dl);
   }
 
+  template<class T>
+  static inline T *symbol(DL dl, const char *name) noexcept {
+    return (T *) dlsym(dl, name);
+  }
+
   template<class R, class ...Args>
   static inline auto funct(DL dl, const char *name) noexcept {
     return (R (*)(Args...)) dlsym(dl, name);
   }
   #endif
+
+  template<class T>
+  static inline auto symbol(DL dl, const std::string &name) noexcept {
+    return symbol<T>(dl, name.data());
+  }
 
   template<class R, class ...Args>
   static inline auto funct(DL dl, const std::string &name) noexcept {
