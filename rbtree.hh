@@ -4,10 +4,10 @@
 
 namespace zlt::rbtree {
   struct Node {
-    Node *parent;
+    Node *parent = nullptr;
     Node *children[0];
-    Node *lchild;
-    Node *rchild;
+    Node *lchild = nullptr;
+    Node *rchild = nullptr;
     bool red = true;
   };
 

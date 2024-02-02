@@ -117,7 +117,16 @@ namespace zlt::rbtree {
 
   int beforeErase(Node *&root, Node *node) noexcept {
     if (node->lchild && node->rchild) {
+      // #ifdef __WIN32__
+      // // wtf?
+      // auto node1 = nextLeft(node->rchild);
+      // node->parent = exchange(node1->parent, node->parent);
+      // node->lchild = exchange(node1->lchild, node->lchild);
+      // node->rchild = exchange(node1->rchild, node->rchild);
+      // swap(node->red, node1->red);
+      // #else
       swap(*node, *nextLeft(node->rchild));
+      // #endif
     }
     if (beforeErase1(root, node)) {
       return 0;
