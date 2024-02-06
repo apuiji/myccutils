@@ -99,4 +99,8 @@ namespace zlt::dl {
   static inline auto funct(DL dl, const std::string &name) noexcept {
     return funct<R, Args...>(dl, name.data());
   }
+
+  static inline const char *error() noexcept {
+    return dlerror();
+  }
 }
