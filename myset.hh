@@ -7,11 +7,12 @@ namespace zlt::myset {
   template<class T>
   struct Node: rbtree::Node {
     T value;
+    Node() = default;
     Node(const T &value): value(value) {}
     Node(T &&value) noexcept: value(std::move(value)) {}
   };
 
-  template<class T, class Del = std::default_delete>
+  template<class T, class Del = std::default_delete<T>>
   int clean(Node<T> *node, const Del &del = {}) noexcept {
     if (!node) [[unlikely]] {
       return 0;
@@ -22,7 +23,7 @@ namespace zlt::myset {
     return 0;
   }
 
-  template<class T, class U, class Comp = Comparator>
+  template<class T, class U, class Comp = Compare>
   Node<T> *find(Node<T> *node, U &&u, const Comp &comp = {}) noexcept {
     if (!node) [[unlikely]] {
       return nullptr;
@@ -36,14 +37,14 @@ namespace zlt::myset {
     }
   }
 
-  template<class T, class U, class Comp = Comparator>
+  template<class T, class U, class Comp = Compare>
   static inline const Node<T> *find(const Node<T> *node, U &&u, const Comp &comp = {}) noexcept {
     return find(const_cast<Node<T> *>(node), std::forward<U>(u), comp);
   }
 
   /// @param[out] parent initialized by null, the parent node of found
   /// @return not null when already exists
-  template<class T, class U, class Comp = Comparator>
+  template<class T, class U, class Comp = Compare>
   Node<T> *&findToInsert(Node<T> *&parent, Node<T> *&node, U &&u, const Comp &comp = {}) noexcept {
     if (!node) [[unlikely]] {
       return node;
@@ -52,7 +53,8 @@ namespace zlt::myset {
     if (diff) {
       parent = node;
       auto &next = node->children[diff > 0];
-      return findToInsert(parent, next, std::forward<U>(u), comp);
+      auto &next1 = reinterpret_cast<Node<T> *&>(next);
+      return findToInsert(parent, next1, std::forward<U>(u), comp);
     } else {
       return node;
     }
@@ -71,6 +73,6 @@ namespace zlt::myset {
 
   template<class T, class U, class Alloc>
   Node<T> *insert(Node<T> *&node, U &&u, Alloc &&alloc) {
-    return insert(node, std::forward<U>(u), Comparator(), std::forward<Alloc>(alloc));
+    return insert(node, std::forward<U>(u), Compare(), std::forward<Alloc>(alloc));
   }
 }

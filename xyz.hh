@@ -80,24 +80,6 @@ namespace zlt {
     return f;
   }
 
-  template<class It>
-  struct Range {
-    It beginv;
-    It endv;
-    It begin() const noexcept {
-      return beginv;
-    }
-    It end() const noexcept {
-      return endv;
-    }
-  };
-
-  template<class T, class U>
-  concept RangeOf = requires (T &t) {
-    { *t.begin(); } -> std::same_as<U>;
-    { *t.end(); } -> std::same_as<U>;
-  };
-
   template<class T>
   static inline T remove(T &t) noexcept {
     return std::move(t);
