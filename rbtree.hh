@@ -113,34 +113,4 @@ namespace zlt::rbtree {
     it.value = next<!Right>(it.value);
     return it1;
   }
-
-  template<std::derived_from<Node> T, bool Right = true>
-  struct Range {
-    T *root;
-    Range(T *root) noexcept: root(root) {}
-    Iterator<T, Right> begin() const noexcept {
-      return root ? mostSide<Right>(root) : nullptr;
-    }
-    Iterator<T, Right> end() const noexcept {
-      return {};
-    }
-    Iterator<T, !Right> rbegin() const noexcept {
-      return root ? mostSide<!Right>(root) : nullptr;
-    }
-    Iterator<T, !Right> rend() const noexcept {
-      return {};
-    }
-    Iterator<const T, Right> cbegin() const noexcept {
-      return root ? mostSide<Right>(root) : nullptr;
-    }
-    Iterator<const T, Right> cend() const noexcept {
-      return {};
-    }
-    Iterator<const T, !Right> crbegin() const noexcept {
-      return root ? mostSide<!Right>(root) : nullptr;
-    }
-    Iterator<const T, !Right> crend() const noexcept {
-      return {};
-    }
-  };
 }
