@@ -66,26 +66,81 @@ namespace zlt::rbtree {
 
   template<std::derived_from<Node> T, bool Right = true>
   struct Iterator {
-    Node *node;
-    Iterator(Node *node = nullptr) noexcept: node(node) {}
-    bool operator ==(Iterator<T, Right> it) const noexcept {
-      return node == it.node;
+    T *value;
+    Iterator(T *value = nullptr) noexcept: value(value) {}
+    T *operator ->() const {
+      return value;
     }
-    bool operator !=(Iterator<T, Right> it) const noexcept {
-      return node != it.node;
+  };
+
+  template<class T, bool Right>
+  static inline bool operator ==(Iterator<T, Right> a, Iterator<T, Right> b) noexcept {
+    return a.value == b.value;
+  }
+
+  template<class T, bool Right>
+  static inline bool operator !=(Iterator<T, Right> a, Iterator<T, Right> b) noexcept {
+    return a.value != b.value;
+  }
+
+  template<class T, bool Right>
+  static inline T &operator *(Iterator<T, Right> &it) noexcept {
+    return it.value;
+  }
+
+  template<class T, bool Right>
+  static inline auto &operator ++(Iterator<T, Right> &it) noexcept {
+    it.value = next<Right>(it.value);
+    return it;
+  }
+
+  template<class T, bool Right>
+  static inline auto operator ++(Iterator<T, Right> &it, int) noexcept {
+    auto it1 = it;
+    it.value = next<Right>(it.value);
+    return it1;
+  }
+
+  template<class T, bool Right>
+  static inline auto &operator --(Iterator<T, Right> &it) noexcept {
+    it.value = next<!Right>(it.value);
+    return it;
+  }
+
+  template<class T, bool Right>
+  static inline auto operator --(Iterator<T, Right> &it, int) noexcept {
+    auto it1 = it;
+    it.value = next<!Right>(it.value);
+    return it1;
+  }
+
+  template<std::derived_from<Node> T, bool Right = true>
+  struct Range {
+    T *root;
+    Range(T *root) noexcept: root(root) {}
+    Iterator<T, Right> begin() const noexcept {
+      return root ? mostSide<Right>(root) : nullptr;
     }
-    T &operator *() const noexcept {
-      return static_cast<T &>(*node);
+    Iterator<T, Right> end() const noexcept {
+      return {};
     }
-    T *operator ->() const noexcept {
-      return static_cast<T *>(node);
+    Iterator<T, !Right> rbegin() const noexcept {
+      return root ? mostSide<!Right>(root) : nullptr;
     }
-    Iterator<T, Right> &operator ++() noexcept {
-      node = next<Right>(node);
-      return *this;
+    Iterator<T, !Right> rend() const noexcept {
+      return {};
     }
-    Iterator<T, Right> operator ++(int) noexcept {
-      return std::exchange(node, next<Right>(node));
+    Iterator<const T, Right> cbegin() const noexcept {
+      return root ? mostSide<Right>(root) : nullptr;
+    }
+    Iterator<const T, Right> cend() const noexcept {
+      return {};
+    }
+    Iterator<const T, !Right> crbegin() const noexcept {
+      return root ? mostSide<!Right>(root) : nullptr;
+    }
+    Iterator<const T, !Right> crend() const noexcept {
+      return {};
     }
   };
 }
