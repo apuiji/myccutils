@@ -101,6 +101,7 @@ namespace zlt::dl {
   }
 
   static inline const char *error() noexcept {
-    return dlerror();
+    // return dlerror();
+    return "";
   }
 }

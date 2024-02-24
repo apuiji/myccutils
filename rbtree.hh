@@ -85,19 +85,19 @@ namespace zlt::rbtree {
 
   template<class T, bool Right>
   static inline T &operator *(Iterator<T, Right> &it) noexcept {
-    return it.value;
+    return *it.value;
   }
 
   template<class T, bool Right>
   static inline auto &operator ++(Iterator<T, Right> &it) noexcept {
-    it.value = next<Right>(it.value);
+    it.value = static_cast<T *>(next<Right>(it.value));
     return it;
   }
 
   template<class T, bool Right>
   static inline auto operator ++(Iterator<T, Right> &it, int) noexcept {
     auto it1 = it;
-    it.value = next<Right>(it.value);
+    it.value = static_cast<T *>(next<Right>(it.value));
     return it1;
   }
 
@@ -112,5 +112,24 @@ namespace zlt::rbtree {
     auto it1 = it;
     it.value = next<!Right>(it.value);
     return it1;
+  }
+
+  template<std::derived_from<Node> T, bool Right = true>
+  static inline auto makeRange(T *root) noexcept {
+    struct Range {
+      T *beginv;
+      Range(T *beginv) noexcept: beginv(beginv) {}
+      Iterator<T, Right> begin() const noexcept {
+        return beginv;
+      }
+      Iterator<T, Right> end() const noexcept {
+        return nullptr;
+      }
+    };
+    if (root) {
+      return Range(static_cast<T *>(mostSide<!Right>(root)));
+    } else {
+      return Range(nullptr);
+    }
   }
 }

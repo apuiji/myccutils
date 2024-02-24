@@ -30,17 +30,7 @@ namespace zlt::mymap {
   /// @param[out] parent initialized by null, the parent node of found
   /// @return not null when already exists
   template<class K, class T, class U, class Comp = Compare>
-  Node<K, T> *&findToInsert(Node<K, T> *&parent, Node<K, T> *&node, U &&u, const Comp &comp = {}) noexcept {
-    return myset::findToInsert(parent, node, std::forward<U>(u), KeyCompare(comp));
-  }
-
-  template<class K, class T, class U, class Comp, class Alloc>
-  Node<K, T> *insert(Node<K, T> *&node, U &&u, const Comp &comp, Alloc &&alloc) {
-    return myset::insert(node, std::forward<U>(u), KeyCompare(comp), std::forward<Alloc>(alloc));
-  }
-
-  template<class K, class T, class U, class Alloc>
-  Node<K, T> *insert(Node<K, T> *&node, U &&u, Alloc &&alloc) {
-    return insert(node, std::forward<U>(u), Compare(), std::forward<Alloc>(alloc));
+  static inline auto findToInsert(Node<K, T> *&node, U &&u, const Comp &comp = {}) noexcept {
+    return myset::findToInsert(node, std::forward<U>(u), KeyCompare(comp));
   }
 }

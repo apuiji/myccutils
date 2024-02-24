@@ -38,33 +38,6 @@ namespace zlt::myiter {
     { t.end() } -> IteratorOf<U>;
   };
 
-  template<class It>
-  struct CommonIterator {
-    It value;
-    CommonIterator(const It &value) noexcept: value(value) {}
-    IterateTo<It> operator *() noexcept {
-      return *value;
-    }
-  };
-
-  template<class It>
-  struct CommonRange {
-    It beginv;
-    It endv;
-    CommonRange(const It &beginv, const It &endv) noexcept: beginv(beginv), endv(endv) {}
-    CommonIterator<It> begin() const noexcept {
-      return beginv;
-    }
-    CommonIterator<It> end() const noexcept {
-      return endv;
-    }
-  };
-
-  template<class It>
-  static inline auto makeCommonRange(const It &begin, const It &end) noexcept {
-    return CommonRange<It>(begin, end);
-  }
-
   template<class It, class Transform>
   struct TransformIterator {
     It value;
