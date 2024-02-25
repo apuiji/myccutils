@@ -9,23 +9,25 @@ namespace zlt::myiter {
   template<class It, class T>
   concept IteratorOf = std::is_convertible_v<IterateTo<It>, T>;
 
-  template<class It>
+  struct Iterator {};
+
+  template<std::derived_from<Iterator> It>
   static inline bool operator ==(const It &a, const It &b) noexcept {
     return a.value == b.value;
   }
 
-  template<class It>
+  template<std::derived_from<Iterator> It>
   static inline bool operator !=(const It &a, const It &b) noexcept {
     return a.value != b.value;
   }
 
-  template<class It>
+  template<std::derived_from<Iterator> It>
   static inline It &operator ++(It &it) noexcept {
     ++it.value;
     return it;
   }
 
-  template<class It>
+  template<std::derived_from<Iterator> It>
   static inline It &operator ++(It &it, int) noexcept {
     It it1 = it;
     ++it.value;
@@ -38,38 +40,73 @@ namespace zlt::myiter {
     { t.end() } -> IteratorOf<U>;
   };
 
-  template<class It, class Transform>
-  struct TransformIterator {
+  template<class It>
+  struct CommonIterator: Iterator {
     It value;
-    const Transform &transform;
-    TransformIterator(const It &value, const Transform &transform) noexcept: value(value), transform(transform) {}
-    decltype(std::declval<Transform>()(std::declval<IterateTo<It>>())) operator *() noexcept {
-      return transform(*value);
+    CommonIterator(const It &value) noexcept: value(value) {}
+    IterateTo<It> operator *() {
+      return *value;
     }
   };
 
-  template<class It, class Transform>
+  template<class It>
+  struct CommonRange {
+    It beginv;
+    It endv;
+    CommonRange(It &&beginv, It &&endv) noexcept: beginv(std::move(beginv)), endv(std::move(endv)) {}
+    CommonIterator<It> begin() const {
+      return beginv;
+    }
+    CommonIterator<It> end() const {
+      return endv;
+    }
+  };
+
+  template<class It>
+  static inline auto makeCommonRange(It &&begin, It &&end) {
+    return CommonRange<It>(std::move(begin), std::move(end));
+  }
+
+  template<class It, class Trans>
+  struct TransformIterator: Iterator {
+    It value;
+    const Trans &trans;
+    TransformIterator(const It &value, const Trans &trans) noexcept: value(value), trans(trans) {}
+    decltype(std::declval<Trans>()(std::declval<IterateTo<It>>())) operator *() {
+      return trans(*value);
+    }
+  };
+
+  template<class It, class Trans>
   struct TransformRange {
     It beginv;
     It endv;
-    Transform transform;
-    TransformRange(const It &beginv, const It &endv, Transform &&transform) noexcept:
-    beginv(beginv), endv(endv), transform(std::move(transform)) {}
-    auto begin() const noexcept {
-      return TransformIterator<It, Transform>(beginv, transform);
+    Trans trans;
+    TransformRange(It &&beginv, It &&endv, Trans &&trans) noexcept:
+    beginv(std::move(beginv)), endv(std::move(endv)), trans(std::move(trans)) {}
+    auto begin() const {
+      return TransformIterator<It, Trans>(beginv, trans);
     }
-    auto end() const noexcept {
-      return TransformIterator<It, Transform>(endv, transform);
+    auto end() const {
+      return TransformIterator<It, Trans>(endv, trans);
     }
   };
 
-  template<class It, class Transform>
-  static inline auto makeTransformRange(const It &begin, const It &end, Transform &&transform) noexcept {
-    return TransformRange<It, Transform>(begin, end, std::move(transform));
+  template<class It, class Trans>
+  static inline auto makeTransformRange(It &&begin, It &&end, Trans &&trans) noexcept {
+    return TransformRange<It, Trans>(std::move(begin), std::move(end), std::move(trans));
+  }
+
+  template<size_t I, class It>
+  static inline auto makeElementAtRange(It &&begin, It &&end) noexcept {
+    return makeTransformRange(std::move(begin), std::move(end), [] (IterateTo<It> value) { return std::get<I>(value); });
   }
 
   template<class It>
-  static inline auto makePointerToRange(const It &begin, const It &end) noexcept {
-    return makeTransformRange(begin, end, [] (IterateTo<It> value) { return *value; });
+  static inline auto makePointerToRange(It &&begin, It &&end) noexcept {
+    return makeTransformRange(
+      std::move(begin),
+      std::move(end),
+      [] (IterateTo<It> value) { return *value; });
   }
 }
