@@ -40,38 +40,11 @@ namespace zlt::myiter {
     { t.end() } -> IteratorOf<U>;
   };
 
-  template<class It>
-  struct CommonIterator: Iterator {
-    It value;
-    CommonIterator(const It &value) noexcept: value(value) {}
-    IterateTo<It> operator *() {
-      return *value;
-    }
-  };
-
-  template<class It>
-  struct CommonRange {
-    It beginv;
-    It endv;
-    CommonRange(It &&beginv, It &&endv) noexcept: beginv(std::move(beginv)), endv(std::move(endv)) {}
-    CommonIterator<It> begin() const {
-      return beginv;
-    }
-    CommonIterator<It> end() const {
-      return endv;
-    }
-  };
-
-  template<class It>
-  static inline auto makeCommonRange(It &&begin, It &&end) {
-    return CommonRange<It>(std::move(begin), std::move(end));
-  }
-
   template<class It, class Trans>
   struct TransformIterator: Iterator {
     It value;
     const Trans &trans;
-    TransformIterator(const It &value, const Trans &trans) noexcept: value(value), trans(trans) {}
+    TransformIterator(const It &value, const Trans &trans): value(value), trans(trans) {}
     decltype(std::declval<Trans>()(std::declval<IterateTo<It>>())) operator *() {
       return trans(*value);
     }
@@ -104,9 +77,6 @@ namespace zlt::myiter {
 
   template<class It>
   static inline auto makePointerToRange(It &&begin, It &&end) noexcept {
-    return makeTransformRange(
-      std::move(begin),
-      std::move(end),
-      [] (IterateTo<It> value) { return *value; });
+    return makeTransformRange(std::move(begin), std::move(end), [] (IterateTo<It> value) { return *value; });
   }
 }
