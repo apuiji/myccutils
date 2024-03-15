@@ -3,35 +3,13 @@
 #include<algorithm>
 #include<concepts>
 #include<iterator>
+#if __has_include(<ranges>)
+#include<ranges>
+#endif
 
 namespace zlt::myiter {
   template<class It, class T>
   concept IteratorOf = std::is_same_v<std::iter_value_t<It>, T>;
-
-  struct Iterator {};
-
-  template<std::derived_from<Iterator> It>
-  static inline bool operator ==(const It &a, const It &b) noexcept {
-    return a.value == b.value;
-  }
-
-  template<std::derived_from<Iterator> It>
-  static inline bool operator !=(const It &a, const It &b) noexcept {
-    return a.value != b.value;
-  }
-
-  template<std::derived_from<Iterator> It>
-  static inline It &operator ++(It &it) noexcept {
-    ++it.value;
-    return it;
-  }
-
-  template<std::derived_from<Iterator> It>
-  static inline It &operator ++(It &it, int) noexcept {
-    It it1 = it;
-    ++it.value;
-    return it1;
-  }
 
   template<class T, class U>
   concept RangeOf = requires (T &t) {
@@ -39,106 +17,108 @@ namespace zlt::myiter {
     { t.end() } -> IteratorOf<U>;
   };
 
-  template<class It>
-  struct SelfIterator: Iterator {
-    using value_type = It;
+  #ifdef __cpp_lib_ranges
+
+  template<class R, class F>
+  static inline auto forEach(R &&r, F &&f) {
+    return std::ranges::for_each(std::forward<R>(r), std::forward<F>(f));
+  }
+
+  template<class I, class S>
+  static inline auto range(I &&i, S &&s) {
+    return std::ranges::subrange(std::forward<I>(i), std::forward<S>(s));
+  }
+
+  template<class R>
+  static inline auto reverseView(R &&r) {
+    return std::ranges::reverse_view(std::forward<R>(r));
+  }
+
+  template<class R, class F>
+  static inline auto transformView(R &&r, F &&f) {
+    return std::ranges::transform_view(std::forward<R>(r), std::forward<F>(f));
+  }
+
+  #else
+
+  template<class R, class F>
+  static inline auto forEach(R &&r, F &&f) {
+    return std::for_each(r.begin(), r.end(), std::forward<F>(f));
+  }
+
+  template<std::input_or_output_iterator It>
+  static inline auto range(const It &begin, const It &end) {
+    struct Range {
+      It begin_;
+      It end_;
+      Range(const It &begin, const It &end): begin_(begin), end_(end) {}
+      It begin() const {
+        return begin_;
+      }
+      It end() const {
+        return end_;
+      }
+    };
+    return Range(begin, end);
+  }
+
+  template<class R>
+  static inline auto reverseView(R &&r) {
+    return range(std::make_reverse_iterator(r.begin()), std::make_reverse_iterator(r.end()));
+  }
+
+  template<class It, class F>
+  struct TransformIterator {
+    using value_type = decltype(std::declval<F>()(*std::declval<It>()));
+    using difference_type = typename It::difference_type;
     It value;
-    SelfIterator(const It &value): value(value) {}
-    value_type operator *() const {
-      return value;
+    F *f;
+    TransformIterator(const It &value, F *f): value(value), f(f) {}
+    bool operator ==(const TransformIterator &end) const {
+      return value == end.value;
+    }
+    value_type operator *() {
+      return (*f)(*value);
+    }
+    auto &operator ++() {
+      ++value;
+      return *this;
+    }
+    auto operator ++(int) {
+      auto a = *this;
+      ++value;
+      return a;
     }
   };
 
-  template<class It>
-  struct SelfRange {
-    It beginv;
-    It endv;
-    SelfRange(const It &beginv, const It &endv): beginv(beginv), endv(endv) {}
-    auto begin() const {
-      return SelfIterator<It>(beginv);
-    }
-    auto end() const {
-      return SelfIterator<It>(endv);
-    }
-  };
-
-  template<class It>
-  static inline auto makeSelfRange(const It &begin, const It &end) {
-    return SelfRange<It>(begin, end);
+  template<class It, class F>
+  static inline auto makeTransformIterator(const It &it, F *f) {
+    return TransformIterator<It, F>(it, f);
   }
 
-  template<class T>
-  static inline auto makeSelfRange(const T &t) {
-    return makeSelfRange(t.begin(), t.end());
+  template<class R, class F>
+  static inline auto transformView(R &&r, F &&f) {
+    using It = decltype(r.begin());
+    using G = std::remove_cvref_t<F>;
+    struct Range {
+      It begin_;
+      It end_;
+      G g;
+      Range(const It &begin, const It &end, F &&f): begin_(begin), end_(end), g(std::forward<F>(f)) {}
+      auto begin() const {
+        return makeTransformIterator(begin_, &g);
+      }
+      auto end() const {
+        return makeTransformIterator(end_, &g);
+      }
+    };
+    return Range(r.begin(), r.end(), std::move(f));
   }
 
-  template<class It, class Trans>
-  struct TransformIterator: Iterator {
-    using value_type = decltype(std::declval<Trans>()(std::declval<std::iter_value_t<It>>()));
-    It value;
-    const Trans &trans;
-    TransformIterator(const It &value, const Trans &trans): value(value), trans(trans) {}
-    value_type operator *() const {
-      return trans(*value);
-    }
-  };
+  #endif
 
-  template<class It, class Trans>
-  struct TransformRange {
-    It beginv;
-    It endv;
-    Trans trans;
-    TransformRange(const It &beginv, const It &endv, Trans &&trans): beginv(beginv), endv(endv), trans(std::move(trans)) {}
-    auto begin() const {
-      return TransformIterator<It, Trans>(beginv, trans);
-    }
-    auto end() const {
-      return TransformIterator<It, Trans>(endv, trans);
-    }
-  };
-
-  template<class It, class Trans>
-  static inline auto makeTransformRange(const It &begin, const It &end, Trans &&trans) {
-    return TransformRange<It, Trans>(begin, end, std::move(trans));
-  }
-
-  template<class T, class Trans>
-  static inline auto makeTransformRange(const T &t, Trans &&trans) {
-    return makeTransformRange(t.begin(), t.end(), std::forward<Trans>(trans));
-  }
-
-  template<class T, class It>
-  static inline auto makeCastRange(const It &begin, const It &end) {
-    return makeTransformRange(begin, end, [] (std::iter_value_t<It> value) { return (T) value; });
-  }
-
-  template<class T, class U>
-  static inline auto makeCastRange(const U &u) {
-    return makeCastRange<T>(u.begin(), u.end());
-  }
-
-  template<size_t I, class It>
-  static inline auto makeElementAtRange(const It &begin, const It &end) {
-    return makeTransformRange(begin, end, [] (std::iter_value_t<It> value) { return std::get<I>(value); });
-  }
-
-  template<size_t I, class T>
-  static inline auto makeElementAtRange(const T &t) {
-    return makeElementAtRange<I>(t.begin(), t.end());
-  }
-
-  template<class It>
-  static inline auto makePointerToRange(const It &begin, const It &end) {
-    return makeTransformRange(begin, end, [] (std::iter_value_t<It> value) { return *value; });
-  }
-
-  template<class T>
-  static inline auto makePointerToRange(const T &t) {
-    return makePointerToRange(t.begin(), t.end());
-  }
-
-  template<class T, class U>
-  static inline auto forEach(const T &t, U &&u) {
-    return std::for_each(t.begin(), t.end(), std::forward<U>(u));
+  template<size_t I, class R>
+  static inline auto elementsView(R &&r) {
+    return transformView(std::forward<R>(r), [] (auto &&a) { return std::get<I>(a); });
   }
 }
