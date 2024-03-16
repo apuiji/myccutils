@@ -3,30 +3,6 @@
 #include<concepts>
 
 namespace zlt {
-  struct Compare {
-    template<class T, class U>
-    inline int operator ()(T &&t, U &&u) const noexcept {
-      return t < u ? -1 : t > u ? 1 : 0;
-    }
-    /// @return comparable
-    template<class T, class U>
-    inline bool operator ()(int &dest, T &&t, U &&u) const noexcept {
-      if (t < u) {
-        dest = -1;
-        return true;
-      }
-      if (t > u) {
-        dest = 1;
-        return true;
-      }
-      if (t == u) {
-        dest = 0;
-        return true;
-      }
-      return false;
-    }
-  };
-
   template<class ...T>
   struct Dynamicastable {
     template<class U>

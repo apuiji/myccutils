@@ -1,7 +1,7 @@
 #pragma once
 
+#include<compare>
 #include"rbtree.hh"
-#include"xyz.hh"
 
 namespace zlt::myset {
   template<class T>
@@ -24,12 +24,12 @@ namespace zlt::myset {
     return 0;
   }
 
-  template<class T, class U, class Comp = Compare>
+  template<class T, class U, class Comp = std::compare_three_way>
   Node<T> *find(Node<T> *node, U &&u, const Comp &comp = {}) noexcept {
     if (!node) [[unlikely]] {
       return nullptr;
     }
-    int diff = comp(std::forward<U>(u), node->value);
+    auto diff = comp(std::forward<U>(u), node->value);
     if (diff) {
       auto next = node->children[diff > 0];
       return find(static_cast<Node<T> *>(next), std::forward<U>(u), comp);
@@ -38,12 +38,12 @@ namespace zlt::myset {
     }
   }
 
-  template<class T, class U, class Comp = Compare>
+  template<class T, class U, class Comp = std::compare_three_way>
   static inline const Node<T> *find(const Node<T> *node, U &&u, const Comp &comp = {}) noexcept {
     return find(const_cast<Node<T> *>(node), std::forward<U>(u), comp);
   }
 
-  template<class T, class U, class Comp = Compare>
+  template<class T, class U, class Comp = std::compare_three_way>
   Node<T> *&findToInsert1(Node<T> *&parent, Node<T> *&node, U &&u, const Comp &comp = {}) noexcept {
     if (!node) [[unlikely]] {
       return node;
@@ -60,7 +60,7 @@ namespace zlt::myset {
   }
 
   /// @return [slot, parent]
-  template<class T, class U, class Comp = Compare>
+  template<class T, class U, class Comp = std::compare_three_way>
   static inline auto findToInsert(Node<T> *&root, U &&u, const Comp &comp = {}) noexcept {
     Node<T> *parent = nullptr;
     auto &slot = findToInsert1(parent, root, std::forward<U>(u), comp);
