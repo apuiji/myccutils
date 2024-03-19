@@ -1,8 +1,24 @@
 #pragma once
 
+#include<compare>
 #include<concepts>
 
 namespace zlt {
+  #ifdef __cpp_lib_three_way_comparison
+
+  using Compare = std::compare_three_way;
+
+  #else
+
+  struct Compare {
+    template<class T, class U>
+    auto operator ()(T &&t, U &&u) {
+      return t <=> u;
+    }
+  };
+
+  #endif
+
   template<class ...T>
   struct Dynamicastable {
     template<class U>

@@ -16,19 +16,19 @@ namespace zlt::mymap {
     }
   };
 
-  template<class K, class T, class U, class Comp = std::compare_three_way>
+  template<class K, class T, class U, class Comp = Compare>
   Node<K, T> *find(Node<K, T> *node, U &&u, const Comp &comp = {}) noexcept {
     return myset::find(node, std::forward<U>(u), KeyCompare(comp));
   }
 
-  template<class K, class T, class U, class Comp = std::compare_three_way>
+  template<class K, class T, class U, class Comp = Compare>
   static inline const Node<K, T> *find(const Node<K, T> *node, U &&u, const Comp &comp = {}) noexcept {
     return find(const_cast<Node<K, T> *>(node), std::forward<U>(u), comp);
   }
 
   /// @param[out] parent initialized by null, the parent node of found
   /// @return not null when already exists
-  template<class K, class T, class U, class Comp = std::compare_three_way>
+  template<class K, class T, class U, class Comp = Compare>
   static inline auto findToInsert(Node<K, T> *&node, U &&u, const Comp &comp = {}) noexcept {
     return myset::findToInsert(node, std::forward<U>(u), KeyCompare(comp));
   }
