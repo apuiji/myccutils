@@ -2,6 +2,7 @@
 
 #include<compare>
 #include<concepts>
+#include<memory>
 
 namespace zlt {
   #ifdef __cpp_lib_three_way_comparison
@@ -31,6 +32,24 @@ namespace zlt {
     bool operator ()(const U &u) noexcept {
       return operator ()(&u);
     }
+  };
+
+  template<class T>
+  struct EscRAII {
+    char data[sizeof(T)];
+    template<class ...Args>
+    EscRAII(Args &&...args) {
+      std::construct_at((T *) data, std::forward<Args>(args)...);
+    }
+    T *get() const noexcept {
+      return (T *) data;
+    }
+    operator T &() const noexcept {
+      return *get();
+    }
+    T *operator ->() const noexcept {
+      return get();
+    } 
   };
 
   template<class T, class ...U>
