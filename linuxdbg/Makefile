@@ -1,9 +1,9 @@
 include ../Makefile
 
-${PROD}: $(addsuffix .o, ${OBJS})
+${PROD}: ${OBJS}
 	ar -rsv $@ $^
 
-%.o: ../%.cc $(addprefix ../, $(addsuffix .hh, ${HHS}))
+%.o: ../%.cc $(addprefix ../, ${HHS})
 	clang++ -o $@ $< -I .. -std=c++2b -c -g
 
 clean:
