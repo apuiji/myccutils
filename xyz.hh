@@ -44,13 +44,21 @@ namespace zlt {
     T *get() const noexcept {
       return (T *) data;
     }
-    operator T &() const noexcept {
+    T &operator *() const noexcept {
       return *get();
     }
     T *operator ->() const noexcept {
       return get();
-    } 
+    }
+    void operator delete() {
+      std::destroy_at(get());
+    }
   };
+
+  template<class T>
+  static inline auto makeEscRAII(T &&t) {
+    return EscRAII<T>(std::move(t));
+  }
 
   template<class T, class ...U>
   static constexpr bool isAnyOf = (std::is_same_v<T, U> || ...);
