@@ -50,8 +50,8 @@ namespace zlt {
     T *operator ->() const noexcept {
       return get();
     }
-    void operator delete() {
-      std::destroy_at(get());
+    void operator delete(void *p) {
+      std::destroy_at(((EscRAII<T> *) p)->get());
     }
   };
 
@@ -102,37 +102,5 @@ namespace zlt {
   template<class T>
   static inline T remove(T &t) noexcept {
     return std::move(t);
-  }
-
-  template<class T>
-  requires (!std::is_reference_v<T>)
-  static inline constexpr auto rtol(T t = T()) noexcept {
-    struct U {
-      T t;
-      U(T t) noexcept: t(t) {}
-      operator T &() && noexcept {
-        return t;
-      }
-      operator T *() && noexcept {
-        return &t;
-      }
-    };
-    return U(t);
-  }
-
-  template<class T>
-  requires (std::is_rvalue_reference_v<T>)
-  static inline auto rtol(T &&t) noexcept {
-    struct U {
-      T t;
-      U(T &&t) noexcept: t(std::move(t)) {}
-      operator T &() && noexcept {
-        return t;
-      }
-      operator T *() && noexcept {
-        return &t;
-      }
-    };
-    return U(std::move(t));
   }
 }
