@@ -27,45 +27,65 @@ namespace zlt::myset {
   }
 
   template<class T, class U, class Comp = Compare>
-  Node<T> *find(Node<T> *node, U &&u, const Comp &comp = {}) noexcept {
+  Node<T> *find(const Node<T> *node, U &&u, const Comp &comp = {}) noexcept {
     if (!node) [[unlikely]] {
       return nullptr;
     }
     auto diff = comp(std::forward<U>(u), node->value);
-    if (diff) {
-      auto next = node->children[diff > 0];
-      return find(static_cast<Node<T> *>(next), std::forward<U>(u), comp);
-    } else {
-      return node;
+    if (std::is_lt(diff)) {
+      return find(static_cast<Node<T> *>(node->lchild), std::forward<U>(u), comp);
     }
+    if (std::is_gt(diff)) {
+      return find(static_cast<Node<T> *>(node->rchild), std::forward<U>(u), comp);
+    }
+    return const_cast<Node<T> *>(node);
   }
 
+  /// @param[out] parent initialized by null, the parent node of found
+  /// @return not null when already exists
   template<class T, class U, class Comp = Compare>
-  static inline const Node<T> *find(const Node<T> *node, U &&u, const Comp &comp = {}) noexcept {
-    return find(const_cast<Node<T> *>(node), std::forward<U>(u), comp);
-  }
-
-  template<class T, class U, class Comp = Compare>
-  Node<T> *&findToInsert1(Node<T> *&parent, Node<T> *&node, U &&u, const Comp &comp = {}) noexcept {
+  Node<T> *&findToInsert(Node<T> *&parent, Node<T> *&node, U &&u, const Comp &comp = {}) noexcept {
     if (!node) [[unlikely]] {
       return node;
     }
-    int diff = comp(std::forward<U>(u), node->value);
-    if (diff) {
+    auto diff = comp(std::forward<U>(u), node->value);
+    if (std::is_lt(diff)) {
       parent = node;
-      auto &next = node->children[diff > 0];
-      auto &next1 = reinterpret_cast<Node<T> *&>(next);
-      return findToInsert1(parent, next1, std::forward<U>(u), comp);
-    } else {
-      return node;
+      return findToInsert(parent, static_cast<Node<T> *&>(node->lchild), std::forward<U>(u), comp);
     }
+    if (std::is_gt(diff)) {
+      parent = node;
+      return findToInsert(parent, static_cast<Node<T> *&>(node->rchild), std::forward<U>(u), comp);
+    }
+    return node;
   }
 
-  /// @return [slot, parent]
-  template<class T, class U, class Comp = Compare>
-  static inline auto findToInsert(Node<T> *&root, U &&u, const Comp &comp = {}) noexcept {
+  /// @param[out] dest found or inserted node
+  /// @return is it inserted
+  template<class T, class U, class Supply, class Comp = Compare>
+  bool insert(Node<T> *&dest, Node<T> *&root, U &&u, Supply &&supply, const Comp &comp = {}) {
     Node<T> *parent = nullptr;
-    auto &slot = findToInsert1(parent, root, std::forward<U>(u), comp);
-    return std::pair<Node<T> **, Node<T> *>(&slot, parent);
+    auto &node = findToInsert(parent, root, std::forward<U>(u), comp);
+    if (node) {
+      dest = node;
+      return false;
+    }
+    dest = supply();
+    dest->parent = parent;
+    node = dest;
+    rbtree::afterInsert(root, node);
+    return true;
+  }
+
+  /// @return is is erased
+  template<class T, class U, class Del = std::default_delete<T>, class Comp = Compare>
+  bool erase(Node<T> *&root, U &&u, Del &&del = {}, const Comp &comp = {}) {
+    auto node = find(root, std::forward<U>(u), comp);
+    if (!node) [[unlikely]] {
+      return false;
+    }
+    rbtree::beforeErase(root, node);
+    del(node);
+    return true;
   }
 }

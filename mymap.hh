@@ -17,19 +17,27 @@ namespace zlt::mymap {
   };
 
   template<class K, class T, class U, class Comp = Compare>
-  Node<K, T> *find(Node<K, T> *node, U &&u, const Comp &comp = {}) noexcept {
+  static inline Node<K, T> *find(const Node<K, T> *node, U &&u, const Comp &comp = {}) noexcept {
     return myset::find(node, std::forward<U>(u), KeyCompare(comp));
-  }
-
-  template<class K, class T, class U, class Comp = Compare>
-  static inline const Node<K, T> *find(const Node<K, T> *node, U &&u, const Comp &comp = {}) noexcept {
-    return find(const_cast<Node<K, T> *>(node), std::forward<U>(u), comp);
   }
 
   /// @param[out] parent initialized by null, the parent node of found
   /// @return not null when already exists
   template<class K, class T, class U, class Comp = Compare>
-  static inline auto findToInsert(Node<K, T> *&node, U &&u, const Comp &comp = {}) noexcept {
-    return myset::findToInsert(node, std::forward<U>(u), KeyCompare(comp));
+  static inline Node<K, T> *&findToInsert(Node<K, T> *&parent, Node<K, T> *&node, U &&u, const Comp &comp = {}) noexcept {
+    return myset::findToInsert(parent, node, std::forward<U>(u), KeyCompare(comp));
+  }
+
+  /// @param[out] dest found or inserted node
+  /// @return is it inserted
+  template<class K, class T, class U, class Supply, class Comp = Compare>
+  static inline bool insert(Node<K, T> *&dest, Node<K, T> *&root, U &&u, Supply &&supply, const Comp &comp = {}) {
+    return myset::insert(dest, root, std::forward<U>(u), KeyCompare(comp));
+  }
+
+  /// @return is is erased
+  template<class K, class T, class U, class Del = std::default_delete<T>, class Comp = Compare>
+  static inline bool erase(Node<K, T> *&root, U &&u, Del &&del = {}, const Comp &comp = {}) {
+    return myset::erase(root, std::forward<U>(u), std::forward<Del>(del), KeyCompare(comp));
   }
 }
