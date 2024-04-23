@@ -57,9 +57,9 @@ namespace zlt::rbtree {
     return lchild;
   }
 
-  static int afterInsert1(Node *node) noexcept;
+  static void afterInsert1(Node *node) noexcept;
 
-  int afterInsert(Node *&root, Node *node) noexcept {
+  void afterInsert(Node *&root, Node *node) noexcept {
     if (node->parent) {
       afterInsert1(node);
       root = mostTop(node);
@@ -67,13 +67,12 @@ namespace zlt::rbtree {
       node->red = false;
       root = node;
     }
-    return 0;
   }
 
-  int afterInsert1(Node *node) noexcept {
+  void afterInsert1(Node *node) noexcept {
     auto parent = node->parent;
     if (!parent->red) {
-      return 0;
+      return;
     }
     auto gparent = parent;
     auto uncle = gparent->children[parent != gparent->rchild];
@@ -81,7 +80,8 @@ namespace zlt::rbtree {
       parent->red = false;
       uncle->red = false;
       gparent->red = true;
-      return afterInsert1(gparent);
+      afterInsert1(gparent);
+      return;
     }
     bool right = node == parent->rchild;
     if (right == (parent == gparent->rchild)) {
@@ -109,13 +109,12 @@ namespace zlt::rbtree {
       node->red = false;
       gparent->red = true;
     }
-    return 0;
   }
 
   static bool beforeErase1(Node *&root, Node *node) noexcept;
-  static int beforeErase2(Node *node) noexcept;
+  static void beforeErase2(Node *node) noexcept;
 
-  int beforeErase(Node *&root, Node *node) noexcept {
+  void beforeErase(Node *&root, Node *node) noexcept {
     if (node->lchild && node->rchild) {
       #ifdef __WIN32__
       // wtf?
@@ -129,7 +128,7 @@ namespace zlt::rbtree {
       #endif
     }
     if (beforeErase1(root, node)) {
-      return 0;
+      return;
     }
     if (!node->red) {
       beforeErase2(node);
@@ -140,7 +139,6 @@ namespace zlt::rbtree {
     } else {
       root = nullptr;
     }
-    return 0;
   }
 
   bool beforeErase1(Node *&root, Node *node) noexcept {
@@ -162,10 +160,10 @@ namespace zlt::rbtree {
     return true;
   }
 
-  int beforeErase2(Node *node) noexcept {
+  void beforeErase2(Node *node) noexcept {
     auto parent = node->parent;
     if (!parent) {
-      return 0;
+      return;
     }
     bool right = node == parent->rchild;
     auto sibling = parent->children[!right];
@@ -178,7 +176,8 @@ namespace zlt::rbtree {
       (right ? rightRotate : leftRotate)(parent);
       parent->red = true;
       sibling->red = false;
-      return beforeErase2(node);
+      beforeErase2(node);
+      return;
     }
     if (auto y = sibling->children[right]; y && y->red) {
       //     P1        P1        Y1
@@ -195,7 +194,7 @@ namespace zlt::rbtree {
       }
       y->red = parent->red;
       parent->red = false;
-      return 0;
+      return;
     }
     if (auto x = sibling->children[!right]; x && x->red) {
       //     P1        S1
@@ -207,7 +206,7 @@ namespace zlt::rbtree {
       sibling->red = parent->red;
       parent->red = false;
       x->red = false;
-      return 0;
+      return;
     }
     //     P?        P?
     //    /  \      /  \
@@ -217,9 +216,8 @@ namespace zlt::rbtree {
     sibling->red = true;
     if (parent->red) {
       parent->red = false;
-      return 0;
     } else {
-      return beforeErase2(parent);
+      beforeErase2(parent);
     }
   }
 }
