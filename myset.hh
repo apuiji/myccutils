@@ -127,8 +127,8 @@ namespace zlt::myset {
     T &operator *() noexcept {
       return static_cast<Node<T> *>(node)->value;
     }
-    Node<T> *operator ->() {
-      return static_cast<Node<T> *>(node);
+    T *operator ->() {
+      return &static_cast<Node<T> *>(node)->value;
     }
     Iterator<T, Right> &operator ++() noexcept {
       node = rbtree::next<Right>(node);
