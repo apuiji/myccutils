@@ -4,15 +4,15 @@ using namespace std;
 
 namespace zlt::rbtree {
   Node *mostLeft(const Node *node) noexcept {
-    return node->lchild ? mostLeft(node->lchild) : node;
+    return node->lchild ? mostLeft(node->lchild) : const_cast<Node *>(node);
   }
 
   Node *mostRight(const Node *node) noexcept {
-    return node->rchild ? mostRight(node->rchild) : node;
+    return node->rchild ? mostRight(node->rchild) : const_cast<Node *>(node);
   }
 
   Node *mostTop(const Node *node) noexcept {
-    return node->parent ? mostTop(node->parent) : node;
+    return node->parent ? mostTop(node->parent) : const_cast<Node *>(node);
   }
 
   Node *nextLeft(const Node *node) noexcept {

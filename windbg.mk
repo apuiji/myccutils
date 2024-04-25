@@ -1,6 +1,6 @@
 include Makefile
 
-windbg/libmyutils.dll.a: ${OBJS}
+windbg/libmyutils.dll.a: $(addprefix windbg/, ${OBJS})
 	ar -rsv $@ $^
 
 windbg/%.o: %.cc ${HHS}

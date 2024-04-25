@@ -1,6 +1,6 @@
 include Makefile
 
-linuxdbg/libmyutils.a: ${OBJS}
+linuxdbg/libmyutils.a: $(addprefix linuxdbg/, ${OBJS})
 	ar -rsv $@ $^
 
 linuxdbg/%.o: %.cc ${HHS}
