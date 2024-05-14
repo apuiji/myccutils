@@ -3,161 +3,104 @@
 using namespace std;
 
 namespace zlt::rbtree {
-  Node *mostLeft(const Node *node) noexcept {
-    return node->lchild ? mostLeft(node->lchild) : const_cast<Node *>(node);
+  void RBTree::swap(RBTree &a) noexcept {
+    BiTree::swap(a);
+    std::swap(red, a.red);
   }
 
-  Node *mostRight(const Node *node) noexcept {
-    return node->rchild ? mostRight(node->rchild) : const_cast<Node *>(node);
-  }
+  // after insert operations begin
+  static void afterInsert1(RBTree *&root, RBTree *tree, RBTree *parent, RBTree *gparent) noexcept;
+  static void afterInsert2(RBTree *&root, RBTree *tree, RBTree *parent, RBTree *gparent) noexcept;
 
-  Node *mostTop(const Node *node) noexcept {
-    return node->parent ? mostTop(node->parent) : const_cast<Node *>(node);
-  }
-
-  Node *nextLeft(const Node *node) noexcept {
-    if (node->lchild) {
-      return mostRight(node->lchild);
+  void afterInsert(RBTree *&root, RBTree *tree) noexcept {
+    auto parent = static_cast<RBTree *>(tree->parent);
+    if (!parent) [[unlikely]] {
+      tree->red = false;
+      root = tree;
+      return;
     }
-    if (node == node->parent->rchild) {
-      return node->parent;
-    }
-    return nullptr;
-  }
-
-  Node *nextRight(const Node *node) noexcept {
-    if (node->rchild) {
-      return mostLeft(node->rchild);
-    }
-    if (node == node->parent->lchild) {
-      return node->parent;
-    }
-    return nullptr;
-  }
-
-  Node *leftRotate(Node *node) noexcept {
-    auto parent = node->parent;
-    auto rchild = node->rchild;
-    node->parent = rchild;
-    node->rchild = rchild->lchild;
-    rchild->parent = parent;
-    rchild->lchild = node;
-    parent->children[node == parent->rchild] = rchild;
-    return rchild;
-  }
-
-  Node *rightRotate(Node *node) noexcept {
-    auto parent = node->parent;
-    auto lchild = node->lchild;
-    node->parent = lchild;
-    node->lchild = lchild->rchild;
-    lchild->parent = parent;
-    lchild->rchild = node;
-    parent->children[node == parent->rchild] = lchild;
-    return lchild;
-  }
-
-  static void afterInsert1(Node *node) noexcept;
-
-  void afterInsert(Node *&root, Node *node) noexcept {
-    if (node->parent) {
-      afterInsert1(node);
-      root = mostTop(node);
-    } else {
-      node->red = false;
-      root = node;
-    }
-  }
-
-  void afterInsert1(Node *node) noexcept {
-    auto parent = node->parent;
     if (!parent->red) {
       return;
     }
-    auto gparent = parent;
-    auto uncle = gparent->children[parent != gparent->rchild];
+    auto gparent = static_cast<RBTree *>(parent->parent);
+    auto uncle = static_cast<RBTree *>(gparent->children[parent == gparent->lchd]);
     if (uncle && uncle->red) {
       parent->red = false;
       uncle->red = false;
       gparent->red = true;
-      afterInsert1(gparent);
+      afterInsert(root, gparent);
       return;
     }
-    bool right = node == parent->rchild;
-    if (right == (parent == gparent->rchild)) {
-      //   GB         PB
-      //  /  \       /  \
-      // UB  PR ->  GR  NR
-      //       \   /
-      //       NR UB
-      (right ? leftRotate : rightRotate)(gparent);
-      parent->red = false;
-      gparent->red = true;
-    } else {
-      //   GB        GB        NB
-      //  /  \      /  \      /  \
-      // PR  UB -> NR  UB -> PR  GR
-      //  |       /                \
-      //  NR     PR                UB
-      if (right) {
-        leftRotate(parent);
-        rightRotate(gparent);
-      } else {
-        rightRotate(parent);
-        leftRotate(gparent);
-      }
-      node->red = false;
-      gparent->red = true;
+    auto f = tree == parent->lchd && parent == gparent->lchd ? afterInsert1 : afterInsert2;
+    f(root, tree, parent, gparent);
+  }
+
+  //     GB        PR        PB
+  //    /  \      /  \      /  \_
+  //   PR  UB -> TR  GB -> TR  GR
+  //  /  \          /  \      /  \_
+  // TR  SB        SB  UB    SB  UB
+  void afterInsert1(RBTree *&root, RBTree *tree, RBTree *parent, RBTree *gparent) noexcept {
+    bool left = tree == parent->lchd;
+    bitree::rotate(gparent, !left);
+    parent->red = false;
+    gparent->red = true;
+    if (root == gparent) {
+      root = parent;
     }
   }
 
-  static bool beforeErase1(Node *&root, Node *node) noexcept;
-  static void beforeErase2(Node *node) noexcept;
-
-  void beforeErase(Node *&root, Node *node) noexcept {
-    if (node->lchild && node->rchild) {
-      #ifdef __WIN32__
-      // wtf?
-      auto node1 = nextLeft(node->rchild);
-      node->parent = exchange(node1->parent, node->parent);
-      node->lchild = exchange(node1->lchild, node->lchild);
-      node->rchild = exchange(node1->rchild, node->rchild);
-      swap(node->red, node1->red);
-      #else
-      swap(*node, *nextLeft(node->rchild));
-      #endif
-    }
-    if (beforeErase1(root, node)) {
-      return;
-    }
-    if (!node->red) {
-      beforeErase2(node);
-    }
-    if (auto parent = node->parent; parent) {
-      root = mostTop(parent);
-      parent->children[node == parent->rchild] = nullptr;
-    } else {
-      root = nullptr;
+  //   GB        GB        __TR__        __TB__
+  //  /  \      /  \      /      \      /      \_
+  // PR  UB -> TR  UB -> PR      GB -> PR      GR
+  //   \      /  \         \    /  \     \    /  \_
+  //   TR    PR  YB        XB  YB  UB    XB  YB  UB
+  //  /  \     \_
+  // XB  YB    XB
+  void afterInsert2(RBTree *&root, RBTree *tree, RBTree *parent, RBTree *gparent) noexcept {
+    bool left = tree == parent->lchd;
+    bitree::rotate(parent, !left);
+    bitree::rotate(gparent, left);
+    tree->red = false;
+    gparent->red = true;
+    if (root == gparent) {
+      root = tree;
     }
   }
+  // after insert operations end
 
-  bool beforeErase1(Node *&root, Node *node) noexcept {
-    auto child = node->lchild;
-    if (!child) {
-      child = node->rchild;
-      if (!child) {
-        return false;
-      }
+  // before erase operations begin
+  static void beforeErase1(RBTree *&root, RBTree *tree) noexcept;
+  static void beforeErase2(RBTree *&root, RBTree *tree, RBTree *child) noexcept;
+  static void beforeErase3(RBTree *&root, RBTree *tree) noexcept;
+  static void beforeErase4(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept;
+  static void beforeErase5(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept;
+
+  void beforeErase(RBTree *&root, RBTree *tree) noexcept {
+    beforeErase1(root, tree);
+    if (tree->lchd) {
+      beforeErase2(root, tree, static_cast<RBTree *>(tree->lchd));
+      return;
     }
-    auto parent = node->parent;
-    child->parent = parent;
-    child->red = false;
-    if (parent) {
-      parent->children[node == parent->rchild] = child;
-    } else {
-      root = child;
+    if (tree->rchd) {
+      beforeErase2(root, tree, static_cast<RBTree *>(tree->rchd));
+      return;
     }
-    return true;
+    if (tree->red) {
+      return;
+    }
+    beforeErase3(root, tree);
+  }
+
+  void beforeErase1(RBTree *&root, RBTree *tree) noexcept {
+    auto a = (RBTree *) bitree::xny(tree, 1);
+    if (!a) {
+      return;
+    }
+    tree->swap(*a);
+    if (root == tree) {
+      root = a;
+    }
   }
 
   void beforeErase2(Node *node) noexcept {

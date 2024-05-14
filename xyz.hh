@@ -5,6 +5,21 @@
 #include<memory>
 
 namespace zlt {
+  template<class T, class U>
+  static inline constexpr size_t offsetOf(T U::*m) noexcept {
+    return (size_t) ((T *) nullptr)->*m;
+  }
+
+  template<class T>
+  static inline constexpr T &containerOf(void *p, auto T::*m) noexcept {
+    return *(T *) (p - offsetOf(m));
+  }
+
+  template<class T>
+  static inline constexpr const T &containerOf(const void *p, auto T::*m) noexcept {
+    return *(const T *) (p - offsetOf(m));
+  }
+
   #ifdef __cpp_lib_three_way_comparison
 
   using Compare = std::compare_three_way;
