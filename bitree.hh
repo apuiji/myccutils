@@ -14,16 +14,16 @@ namespace zlt {
 }
 
 namespace zlt::bitree {
-  template<class Dtor = std::default_delete>
-  void clean(BiTree *tree, Dtor &&dtor = {}) noexcept {
+  template<class Dtor>
+  void clean(BiTree *tree, const Dtor &dtor) noexcept {
     if (!tree) [[unlikely]] {
       return;
     }
     auto lchd = tree->lchd;
     auto rchd = tree->rchd;
     dtor(tree);
-    clean(lchd, std::forward<Dtor>(dtor));
-    clean(rchd, std::forward<Dtor>(dtor));
+    clean(lchd, dtor);
+    clean(rchd, dtor);
   }
 
   /// @param tree requires not null
@@ -54,7 +54,7 @@ namespace zlt::bitree {
     }
     int diff = cmp(std::forward<T>(t), *tree);
     if (!diff) {
-      return tree;
+      return (BiTree *) tree;
     }
     return find(tree->children[diff > 0], cmp, std::forward<T>(t));
   }

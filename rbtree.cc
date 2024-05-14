@@ -2,12 +2,14 @@
 
 using namespace std;
 
-namespace zlt::rbtree {
+namespace zlt {
   void RBTree::swap(RBTree &a) noexcept {
     BiTree::swap(a);
     std::swap(red, a.red);
   }
+}
 
+namespace zlt::rbtree {
   // after insert operations begin
   static void afterInsert1(RBTree *&root, RBTree *tree, RBTree *parent, RBTree *gparent) noexcept;
   static void afterInsert2(RBTree *&root, RBTree *tree, RBTree *parent, RBTree *gparent) noexcept;
@@ -73,8 +75,6 @@ namespace zlt::rbtree {
   static void beforeErase1(RBTree *&root, RBTree *tree) noexcept;
   static void beforeErase2(RBTree *&root, RBTree *tree, RBTree *child) noexcept;
   static void beforeErase3(RBTree *&root, RBTree *tree) noexcept;
-  static void beforeErase4(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept;
-  static void beforeErase5(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept;
 
   void beforeErase(RBTree *&root, RBTree *tree) noexcept {
     beforeErase1(root, tree);
@@ -103,64 +103,69 @@ namespace zlt::rbtree {
     }
   }
 
-  void beforeErase2(Node *node) noexcept {
-    auto parent = node->parent;
-    if (!parent) {
-      return;
-    }
-    bool right = node == parent->rchild;
-    auto sibling = parent->children[!right];
-    if (sibling->red) {
-      //     PB        SB
-      //    /  \      /  \
-      //   SR  NB -> XB  PR
-      //  / |            | \
-      // XB YB          YB NB
-      (right ? rightRotate : leftRotate)(parent);
-      parent->red = true;
-      sibling->red = false;
-      beforeErase2(node);
-      return;
-    }
-    if (auto y = sibling->children[right]; y && y->red) {
-      //     P1        P1        Y1
-      //    /  \      /  \      /  \
-      //   SB  NB -> YR  NB -> SB  PB
-      //    |       /                \
-      //    YR     SB                NB
-      if (right) {
-        leftRotate(sibling);
-        rightRotate(parent);
-      } else {
-        rightRotate(sibling);
-        leftRotate(parent);
-      }
-      y->red = parent->red;
-      parent->red = false;
-      return;
-    }
-    if (auto x = sibling->children[!right]; x && x->red) {
-      //     P1        S1
-      //    /  \      /  \
-      //   SB  NB -> XB  PB
-      //  /                \
-      // XR                NB
-      (right ? rightRotate : leftRotate)(parent);
-      sibling->red = parent->red;
-      parent->red = false;
-      x->red = false;
-      return;
-    }
-    //     P?        P?
-    //    /  \      /  \
-    //   SB  NB -> SR  NB
-    //  / |       / |
-    // XB YB     XB YB
-    sibling->red = true;
-    if (parent->red) {
-      parent->red = false;
+  void beforeErase2(RBTree *&root, RBTree *tree, RBTree *child) noexcept {
+    auto parent = tree->parent;
+    child->parent = parent;
+    child->red = false;
+    if (parent) {
+      parent->children[tree == parent->rchd] = child;
     } else {
-      beforeErase2(parent);
+      root = child;
     }
+  }
+
+  static void beforeErase4(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept;
+  static void beforeErase5(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept;
+
+  void beforeErase3(RBTree *&root, RBTree *tree) noexcept {
+    auto parent = tree->parent;
+    auto sibling = parent->children[tree == parent->lchd];
+    auto f = sibling && sibling->red ? beforeErase4 : beforeErase5;
+    f(root, tree, sibling, parent);
+  }
+
+  //   PB         SR        SB
+  //  /  \       /  \      /  \
+  // TB  SR  -> PB  YB -> PR  YB
+  //    /  \   /  \      /  \
+  //   XB  YB TB  XB    TB  XB
+  void beforeErase4(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept {
+    bool right = tree == parent->rchd;
+    auto x = sibling->children[right];
+    bitree::rotate(parent, right);
+    sibling->red = false;
+    parent->red = true;
+    if (root == parent) {
+      root = sibling;
+    }
+    beforeErase5(root, tree, x, parent);
+  }
+
+  static void beforeErase6(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept;
+  static void beforeErase7(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept;
+  static void beforeErase8(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept;
+
+  void beforeErase5(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept {
+    void (*f)(RBTree *&, RBTree *, RBTree *, RBTree *) noexcept;
+    bool right = tree == parent->rchd;
+    if (auto x = sibling->children[right]; x && x->red) {
+      f = beforeErase6;
+    } else if (auto y = sibling->children[!right]; y && y->red) {
+      f = beforeErase7;
+    } else {
+      f = beforeErase8;
+    }
+    f(root, tree, sibling, parent);
+  }
+
+  //   PC        PC         __XR__        __XC__
+  //  /  \      /  \       /      \      /      \_
+  // TB  SB -> TB  XR  -> PC      SB -> PB      SB
+  //    /         /  \   /  \    /     /  \    /
+  //   XR        UB  SB TB  UB  VB    TB  UB  VB
+  //  /  \          /
+  // UB  VB        VB
+  void beforeErase6(RBTree *&root, RBTree *tree, RBTree *sibling, RBTree *parent) noexcept {
+    bool right = node == 
   }
 }

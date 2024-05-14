@@ -2,12 +2,15 @@
 
 using namespace std;
 
-namespace zlt::bitree {
+namespace zlt {
   void BiTree::swap(BiTree &a) noexcept {
     std::swap(parent, a.parent);
     std::swap(lchd, a.lchd);
     std::swap(rchd, a.rchd);
   }
+}
+
+namespace zlt::bitree {
 
   BiTree *mostSide(const BiTree *tree, int side) noexcept {
     auto next = tree->children[side];
@@ -40,7 +43,7 @@ namespace zlt::bitree {
 
   static BiTree *xny1(const BiTree *tree, int xy) noexcept;
 
-  BiTree *xny1(const BiTree *tree, int xy) noexcept {
+  BiTree *xny(const BiTree *tree, int xy) noexcept {
     if (auto y = tree->children[!xy]; y) {
       return mostSide(y, xy);
     }
@@ -80,5 +83,6 @@ namespace zlt::bitree {
     if (parent) {
       parent->children[tree == parent->rchd] = child;
     }
+    return child;
   }
 }

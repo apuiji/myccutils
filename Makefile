@@ -1,2 +1,2 @@
-HHS := mymap.hh myset.hh rbtree.hh xyz.hh
-OBJS := rbtree.o
+HHS = mymap.hh myset.hh rbtree.hh xyz.hh
+OBJS = bitree.o rbtree.o
