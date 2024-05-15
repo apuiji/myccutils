@@ -12,6 +12,11 @@ namespace zlt {
   }
 
   template<class T, class U>
+  static inline constexpr const T &memberOf(const void *p, T U::*m) noexcept {
+    return ((const U *) p)->*m;
+  }
+
+  template<class T, class U>
   static inline constexpr size_t offsetOf(T U::*m) noexcept {
     return (size_t) ((T *) nullptr)->*m;
   }

@@ -43,11 +43,11 @@ namespace zlt::myset {
 
   template<class T, class U, class Cmp = Compare>
   static inline void *find(const MySet<T> &set, U &&u, const Cmp &cmp = {}) noexcept {
-    return bitree::find(set.root, ValueCompare<T>(cmp), std::forward<U>(u));
+    return bitree::find(set.root, ValueCompare<T, Cmp>(cmp), std::forward<U>(u));
   }
 
   template<class T, class U, class Cmp = Compare>
   static inline void *&findForInsert(void *&parent, MySet<T> &set, U &&u, const Cmp &cmp = {}) noexcept {
-    return *bitree::findForInsert(parent, set.root, ValueCompare<T>(cmp), std::forward<U>(u));
+    return *bitree::findForInsert(parent, set.root, ValueCompare<T, Cmp>(cmp), std::forward<U>(u));
   }
 }
