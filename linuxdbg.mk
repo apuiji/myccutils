@@ -1,13 +1,15 @@
 include Makefile
 
-linuxdbg/libmyutils.a: $(addprefix linuxdbg/, ${OBJS})
+DEST = linuxdbg
+
+${DEST}/libmyutils.a: $(addprefix ${DEST}/, ${OBJS})
 	ar -rsv $@ $^
 
-linuxdbg/%.o: %.cc ${HHS}
-	clang++ $< -c -g -O2 -o $@ -std=c++2b -stdlib=libc++
+${DEST}/%.o: %.c ${HEADS}
+	gcc $< -c -g -O2 -o $@
 
 clean:
-	touch linuxdbg/libmyutils.a linuxdbg/a.o
-	rm linuxdbg/libmyutils.a linuxdbg/*.o
+	touch ${DEST}/libmyutils.a ${DEST}/a.o
+	rm ${DEST}/libmyutils.a ${DEST}/*.o
 
 .PHONY: clean
