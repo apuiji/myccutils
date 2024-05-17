@@ -1,6 +1,6 @@
 #include<ctype.h>
 #include<math.h>
-#include"string.h"
+#include"zlt/string.h"
 
 int zltIsBasedDigitChar(int c, size_t base) {
   if (base >= 2 && base < 10) {
@@ -44,13 +44,13 @@ zltString zltStrToLong(long *dest, zltString src, size_t base) {
     return src;
   }
   if (*src.data == '+') {
-    if (!(src.size > 1 && isdigit(src.data[1]))) {
+    if (!(src.size > 1 && zltIsBasedDigitChar(src.data[1], base))) {
       return src;
     }
     return zltStrToUnsignedLong((unsigned long *) dest, zltStrForward(src, 1), base);
   }
   if (*src.data == '-') {
-    if (!(src.size > 1 && isdigit(src.data[1]))) {
+    if (!(src.size > 1 && zltIsBasedDigitChar(src.data[1], base))) {
       return src;
     }
     zltString s = zltStrToUnsignedLong((unsigned long *) dest, zltStrForward(src, 1), base);
@@ -66,7 +66,7 @@ zltString zltStrToUnsignedLong(unsigned long *dest, zltString src, size_t base) 
     if (i < 0) {
       break;
     }
-    *dest = (*dest * base) | (i - '0');
+    *dest = (*dest * base) | i;
   }
   return src;
 }

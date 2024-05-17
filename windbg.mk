@@ -5,8 +5,8 @@ DEST = windbg
 ${DEST}/libmyutils.dll.a: $(addprefix ${DEST}/, ${OBJS})
 	ar -rsv $@ $^
 
-${DEST}/%.o: %.c ${HEADS}
-	gcc $< -c -g -O2 -o $@
+${DEST}/%.o: %.c
+	gcc $< -c -g -I . -O2 -o $@
 
 clean:
 	echo>${DEST}\libmyutils.dll.a

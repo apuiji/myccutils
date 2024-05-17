@@ -1,4 +1,4 @@
-#include"bitree.h"
+#include"zlt/bitree.h"
 
 void zltBiTreeSwap(void **root, void *a, void *b) {
   void *parent = zltBiTreeMemb(a, parent);
@@ -96,6 +96,7 @@ void *zltBiTreeRotate(void *tree, bool right) {
   if (parent) {
     parent->children[tree == parent->rchd] = child;
   }
+  return child;
 }
 
 // find operations begin

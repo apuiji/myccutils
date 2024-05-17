@@ -1,5 +1,5 @@
 #include<string.h>
-#include"strtree.h"
+#include"zlt/strtree.h"
 
 int zltStrTreeCmpForFind(const void *data, const void *tree) {
   if (zltStrMemb(data, size) < zltStrTreeMemb(tree, value).size) {

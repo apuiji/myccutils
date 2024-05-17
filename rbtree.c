@@ -1,4 +1,4 @@
-#include"rbtree.h"
+#include"zlt/rbtree.h"
 
 void zltRBTreeSwap(void **root, void *a, void *b) {
   zltBiTreeSwap(root, a, b);
@@ -30,11 +30,8 @@ void zltRBTreeAfterInsert(void **root, void *node) {
     zltRBTreeAfterInsert(root, gparent);
     return;
   }
-  if ((node == zltBiTreeMemb(parent, lchd)) == (parent == zltBiTreeMemb(gparent, lchd))) {
-    afterInsert1(root, node, parent, gparent);
-  } else {
-    afterInsert2(root, node, parent, gparent);
-  }
+  bool b = (node == zltBiTreeMemb(parent, lchd)) == (parent == zltBiTreeMemb(gparent, lchd));
+  (b ? afterInsert1 : afterInsert2)(root, node, parent, gparent);
 }
 
 //     GB        PR        PB
@@ -102,9 +99,9 @@ void beforeErase3(void **root, void *node) {
 }
 
 //   PB         SR        SB
-//  /  \       /  \      /  \
+//  /  \       /  \      /  \_
 // NB  SR  -> PB  YB -> PR  YB
-//    /  \   /  \      /  \
+//    /  \   /  \      /  \_
 //   XB  YB NB  XB    NB  XB
 void beforeErase4(void **root, void *node, void *sibling, void *parent) {
   bool right = node == zltBiTreeMemb(parent, rchd);
@@ -123,18 +120,21 @@ static void beforeErase7(void **root, void *node, void *sibling, void *parent);
 static void beforeErase8(void **root, void *node, void *sibling, void *parent);
 
 void beforeErase5(void **root, void *node, void *sibling, void *parent) {
+  void (*f)(void **root, void *node, void *sibling, void *parent);
   bool right = node == zltBiTreeMemb(parent, rchd);
   void *x = zltBiTreeMemb(sibling, children)[right];
   if (x && zltRBTreeMemb(x, red)) {
-    beforeErase6(root, node, sibling, parent);
-    return;
+    f = beforeErase6;
+    goto A;
   }
   void *y = zltBiTreeMemb(sibling, children)[!right];
   if (y && zltRBTreeMemb(y, red)) {
-    beforeErase7(root, node, sibling, parent);
-    return;
+    f = beforeErase7;
+    goto A;
   }
-  beforeErase8(root, node, sibling, parent);
+  f = beforeErase8;
+  A:
+  f(root, node, sibling, parent);
 }
 
 //   PC        PC         __XR__        __XC__
@@ -174,9 +174,9 @@ void beforeErase7(void **root, void *node, void *sibling, void *parent) {
 }
 
 //   PC        PC        PB
-//  /  \      /  \      /  \
+//  /  \      /  \      /  \_
 // NB  SB -> NB  SR -> NB  SR
-//    /  \      /  \      /  \
+//    /  \      /  \      /  \_
 //   XB  YB    XB  YB    XB  YB
 void beforeErase8(void **root, void *node, void *sibling, void *parent) {
   zltRBTreeMemb(sibling, red) = true;
