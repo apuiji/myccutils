@@ -39,7 +39,7 @@ zltString zltStrTrimEnd(zltString str) {
   return zltStrMake(it, left);
 }
 
-zltString zltStrToLong(long *dest, zltString src, size_t base) {
+zltString zltStrToLong(long *dest, zltString src, size_t base, zltStrToULongFn *toULong) {
   if (!src.size) {
     return src;
   }
@@ -47,17 +47,17 @@ zltString zltStrToLong(long *dest, zltString src, size_t base) {
     if (!(src.size > 1 && zltIsDigitChar(src.data[1], base))) {
       return src;
     }
-    return zltStrToULong((unsigned long *) dest, zltStrForward(src, 1), base);
+    return toULong((unsigned long *) dest, zltStrForward(src, 1), base);
   }
   if (*src.data == '-') {
     if (!(src.size > 1 && zltIsDigitChar(src.data[1], base))) {
       return src;
     }
-    zltString s = zltStrToULong((unsigned long *) dest, zltStrForward(src, 1), base);
+    zltString s = toULong((unsigned long *) dest, zltStrForward(src, 1), base);
     *dest = -*dest;
     return s;
   }
-  return zltStrToULong((unsigned long *) dest, src, base);
+  return toULong((unsigned long *) dest, src, base);
 }
 
 zltString zltStrToULong(unsigned long *dest, zltString src, size_t base) {
@@ -71,7 +71,7 @@ zltString zltStrToULong(unsigned long *dest, zltString src, size_t base) {
   return src;
 }
 
-zltString zltStrToDouble(double *dest, zltString src) {
+zltString zltStrToDouble(double *dest, zltString src, zltStrToUDouble *toUDouble) {
   if (!src.size) {
     return src;
   }
@@ -79,17 +79,17 @@ zltString zltStrToDouble(double *dest, zltString src) {
     if (!(src.size > 1 && isdigit(src.data[1]))) {
       return src;
     }
-    return zltStrToUDouble(dest, zltStrForward(src, 1));
+    return toUDouble(dest, zltStrForward(src, 1));
   }
   if (*src.data == '-') {
     if (!(src.size > 1 && isdigit(src.data[1]))) {
       return src;
     }
-    zltString s = zltStrToUDouble(dest, zltStrForward(src, 1));
+    zltString s = toUDouble(dest, zltStrForward(src, 1));
     *dest = -*dest;
     return s;
   }
-  return zltStrToUDouble(dest, src);
+  return toUDouble(dest, src);
 }
 
 static zltString strtoud1(double *dest, zltString src);
