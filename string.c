@@ -21,6 +21,24 @@ int zltIsDigitChar(int c, size_t base) {
   return -1;
 }
 
+bool zltStrEq(zltString a, zltString b) {
+  return a.size == b.size && strncmp(a.data, b.data, a.size);
+}
+
+int zltStrCmp(zltString a, zltString b) {
+  if (a.size > b.size) {
+    return -zltStrCmp(b, a);
+  }
+  int diff = strncmp(a.data, b.data, a.size);
+  if (diff > 0) {
+    return 1;
+  }
+  if (diff < 0 || a.size < b.size) {
+    return -1;
+  }
+  return 0;
+}
+
 zltString zltStrTrimStart(zltString str) {
   const char *it = str.data;
   size_t left = str.size;
