@@ -22,47 +22,125 @@ void *zlt23TreeMostSide(const void *tree, int side) {
 }
 
 // iterators begin
-static void *nxy1(const void *tree, int xy);
+static void *nextLR1(zlt23TreeIter *it);
 
-void *zlt23TreeNXY(const void *tree, int xy) {
-  void *x = zlt23TreeMemb(tree, children)[xy];
-  if (x) {
-    return x;
+void *zlt23TreeNextLR(zlt23TreeIter *it) {
+  if (it->dataIndex == 2) {
+    return nextLR1(it);
   }
-  return nxy1(tree, xy);
+  ++it->dataIndex;
+  void *d = zlt23TreeMemb(it->tree, data)[it->dataIndex];
+  if (!d) {
+    return zlt23TreeNextLR(it);
+  }
+  return d;
 }
 
-void *nxy1(const void *tree, int xy) {
-  zlt23Tree *parent = (zlt23Tree *) zlt23TreeMemb(tree, parent);
-  if (!parent) {
+void *nextLR1(zlt23TreeIter *it) {
+  void *p = zlt23TreeMemb(it->tree, parent);
+  if (!p) {
     return NULL;
   }
-  if (tree == parent->children[xy]) {
-    return parent->mchd;
+  if (it->tree == zlt23TreeMemb(p, rchd)) {
+    it->tree = p;
+    return nextLR1(it);
   }
-  if (tree == parent->mchd) {
-    return parent->children[!xy];
+  if (it->tree == zlt23TreeMemb(p, mchd)) {
+    it->tree = zlt23TreeMemb(p, rchd);
+  } else {
+    it->tree = zlt23TreeMemb(p, mchd);
   }
-  return nxy1(parent, xy);
+  it->dataIndex = 0;
+  return zlt23TreeNextLR(it);
 }
 
-static void *xny1(const void *tree, int xy);
+static void *nextRL1(zlt23TreeIter *it);
 
-void *zlt23TreeXNY(const void *tree, int xy) {
-  void *y = zltBiTreeMemb(tree, children)[!xy];
-  if (y) {
-    return zltBiTreeMostSide(y, xy);
+void *zlt23TreeNextRL(zlt23TreeIter *it) {
+  if (it->dataIndex == 0) {
+    return nextRL1(it);
   }
-  return xny1(tree, xy);
+  --it->dataIndex;
+  void *d = zlt23TreeMemb(it->tree, data)[it->dataIndex];
+  if (!d) {
+    return zlt23TreeNextRL(it);
+  }
+  return d;
 }
 
-void *xny1(const void *tree, int xy) {
-  zltBiTree *parent = (zltBiTree *) zltBiTreeMemb(tree, parent);
-  if (!parent) {
+void *nextRL1(zlt23TreeIter *it) {
+  void *p = zlt23TreeMemb(it->tree, parent);
+  if (!p) {
     return NULL;
   }
-  if (tree == parent->children[xy]) {
-    return parent;
+  if (it->tree == zlt23TreeMemb(p, lchd)) {
+    it->tree = p;
+    return nextRL1(it);
   }
-  return xny1(parent, xy);
+  if (it->tree == zlt23TreeMemb(p, mchd)) {
+    it->tree = zlt23TreeMemb(p, lchd);
+  } else {
+    it->tree = zlt23TreeMemb(p, mchd);
+  }
+  it->dataIndex = 2;
+  return zlt23TreeNextRL(it);
 }
+// iterators end
+
+// find operations begin
+void *zlt23TreeFind(const void *tree, zlt23TreeCmpForFind *cmp, const void *data) {
+  if (!tree) {
+    return NULL;
+  }
+  void *datum = zlt23TreeMemb(tree, datum0);
+  int i = cmp(data, datum);
+  if (!i) {
+    return datum;
+  }
+  if (i < 0) {
+    tree = zlt23TreeMemb(tree, lchd);
+    goto A;
+  }
+  datum = zlt23TreeMemb(tree, datum1);
+  if (!datum) {
+    tree = zlt23TreeMemb(tree, rchd);
+    goto A;
+  }
+  i = cmp(data, datum);
+  if (!i) {
+    return datum;
+  }
+  if (i < 0) {
+    tree = zlt23TreeMemb(tree, mchd);
+    goto A;
+  }
+  tree = zlt23TreeMemb(tree, rchd);
+  A:
+  return zlt23TreeFind(tree, cmp, data);
+}
+
+void **zlt23TreeFindForInsert(void *tree, zlt23TreeCmpForFind *cmp, const void *data) {
+  void **datum = &zlt23TreeMemb(tree, datum0);
+  int i = cmp(data, *datum);
+  if (!i) {
+    return datum;
+  }
+  void *child;
+  if (i < 0) {
+    child = zlt23TreeMemb(tree, lchd);
+    if (child) {
+      goto A;
+    }
+  }
+  datum = &zlt23TreeMemb(tree, datum1);
+  if (!*datum) {
+    return datum;
+  }
+  i = cmp(data, *datum);
+  if (!i) {
+    return datum;
+  }
+  A:
+  return zlt23TreeFindForInsert(child, cmp, data);
+}
+// find operations end
