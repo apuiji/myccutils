@@ -1,5 +1,6 @@
 #include<ctype.h>
 #include<math.h>
+#include<string.h>
 #include"zlt/string.h"
 
 int zltIsDigitChar(int c, size_t base) {
@@ -89,7 +90,7 @@ zltString zltStrToULong(unsigned long *dest, zltString src, size_t base) {
   return src;
 }
 
-zltString zltStrToDouble(double *dest, zltString src, zltStrToUDouble *toUDouble) {
+zltString zltStrToDouble(double *dest, zltString src, zltStrToUDoubleFn *toUDouble) {
   if (!src.size) {
     return src;
   }
@@ -150,7 +151,7 @@ zltString strtoud3(double *dest, zltString src) {
     return src;
   }
   long e = 0;
-  zltString s = zltStrToLong(&e, zltStrForward(src, 1), 10);
+  zltString s = zltStrToLong(&e, zltStrForward(src, 1), 10, zltStrToULong);
   if (src.size - s.size == 1) {
     return src;
   }

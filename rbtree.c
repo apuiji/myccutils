@@ -204,3 +204,13 @@ void zltRBTreeErase(void **root, void *node) {
     zltRBTreeMemb(child, red) = false;
   }
 }
+
+void *zltRBTreeFindAndErase(void **root, zltBiTreeCmpForFind *cmp, const void *data) {
+  void *node = zltBiTreeFind(*root, cmp, data);
+  if (!node) {
+    return NULL;
+  }
+  zltRBTreeBeforeErase(root, node);
+  zltRBTreeErase(root, node);
+  return node;
+}
