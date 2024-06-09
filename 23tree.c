@@ -144,3 +144,12 @@ void **zlt23TreeFindForInsert(void *tree, zlt23TreeCmpForFind *cmp, const void *
   return zlt23TreeFindForInsert(child, cmp, data);
 }
 // find operations end
+static void afterInsert(void **tree, void *node);
+
+bool zlt23TreeInsert(void **tree, zlt23TreeCmpForFind *cmp, const void *data, void *standby) {
+  void **a = findForInsert(*tree, cmp, data);
+  if (*a) {
+    return false;
+  }
+  *a = data;
+}
