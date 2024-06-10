@@ -22,6 +22,15 @@ int zltIsDigitChar(int c, size_t base) {
   return -1;
 }
 
+zltString zltStrClone(zltString str) {
+  char *data = (char *) malloc(str.size);
+  if (!data) {
+    return zltStrMake(zltInvPtr, zltInvSize);
+  }
+  memcpy(data, str.data, str.size);
+  return zltStrMake(data, str.size);
+}
+
 bool zltStrEq(zltString a, zltString b) {
   return a.size == b.size && !strncmp(a.data, b.data, a.size);
 }
