@@ -23,7 +23,7 @@ int zltIsDigitChar(int c, size_t base) {
 }
 
 bool zltStrEq(zltString a, zltString b) {
-  return a.size == b.size && strncmp(a.data, b.data, a.size);
+  return a.size == b.size && !strncmp(a.data, b.data, a.size);
 }
 
 int zltStrCmp(zltString a, zltString b) {
