@@ -1,26 +1,22 @@
 #include"zlt/stack.h"
 
-bool zltStackPush(void *k, const void *data, size_t size) {
-  if (zltStackMemb(k, left) < size) {
-    return false;
-  }
+void zltStackPush(void *k, const void *data, size_t size) {
   memcpy(zltStackMemb(k, top), data, size);
   zltStackMemb(k, top) += size;
   zltStackMemb(k, left) -= size;
-  return true;
 }
 
-bool zltStackRealloc(void *k, size_t size) {
-  size_t distance = zltStackMemb(k, top) - zltStackMemb(k, data);
-  void *data = realloc(zltStackMemb(k, data), size);
+bool zltStackReCapacity(void *k, size_t capacity) {
+  size_t size = zltStackSize(k);
+  void *data = realloc(zltStackMemb(k, data), capacity);
   if (!data) {
     return false;
   }
   zltStackMemb(k, data) = data;
-  if (distance > size) {
-    distance = size;
+  if (size > capacity) {
+    size = capacity;
   }
-  zltStackMemb(k, top) = data + distance;
-  zltStackMemb(k, left) = size - distance;
+  zltStackMemb(k, top) = data + size;
+  zltStackMemb(k, left) = capacity - size;
   return true;
 }
