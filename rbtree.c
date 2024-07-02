@@ -1,28 +1,29 @@
 #include"zlt/rbtree.h"
+#include"zlt/xyz.h"
 
-void zltRBTreeSwap(void **root, void *a, void *b) {
-  zltBiTreeSwap(root, a, b);
-  bool bu = zltRBTreeMemb(a, red);
-  zltRBTreeMemb(a, red) = zltRBTreeMemb(b, red);
-  zltRBTreeMemb(b, red) = bu;
+void zltRBTreeSwap(zltBiTree **root, zltRBTree *a, zltRBTree *b) {
+  zltBiTreeSwap(root, (zltBiTree *) a, (zltBiTree *) b);
+  bool red = a->red;
+  a->red = b->red;
+  b->red = red;
 }
 
 // after insert operations begin
-static void afterInsert1(void **root, void *node, void *parent, void *gparent);
-static void afterInsert2(void **root, void *node, void *parent, void *gparent);
+static void afterInsert1(zltBiTree **root, zltRBTree *node, zltRBTree *parent, zltRBTree *gparent);
+static void afterInsert2(zltBiTree **root, zltRBTree *node, zltRBTree *parent, zltRBTree *gparent);
 
-void zltRBTreeAfterInsert(void **root, void *node) {
-  void *parent = zltBiTreeMemb(node, parent);
+void zltRBTreeAfterInsert(zltBiTree **root, zltRBTree *node) {
+  zltRBTree *parent = (zltRBTree *) node->biTree.parent;
   if (!parent) {
-    zltRBTreeMemb(node, red) = false;
-    *root = node;
+    node->red = false;
+    *root = (zltBiTree *) node;
     return;
   }
-  if (!zltRBTreeMemb(parent, red)) {
+  if (!parent->red) {
     return;
   }
-  void *gparent = zltBiTreeMemb(parent, parent);
-  void *uncle = zltBiTreeMemb(gparent, children)[parent == zltBiTreeMemb(gparent, lchd)];
+  zltRBTree *gparent = (zltRBTree *) parent->biTree.parent;
+  zltRBTree *uncle = (zltRBTree *) gparent->biTree.children[parent == zltBiTreeMemb(gparent, lchd)];
   if (uncle && zltRBTreeMemb(uncle, red)) {
     zltRBTreeMemb(parent, red) = false;
     zltRBTreeMemb(uncle, red) = false;

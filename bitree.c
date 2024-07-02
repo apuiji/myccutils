@@ -1,48 +1,48 @@
 #include"zlt/bitree.h"
+#include"zlt/xyz.h"
 
-void zltBiTreeSwap(void **root, void *a, void *b) {
-  void *parent = zltBiTreeMemb(a, parent);
+void zltBiTreeSwap(zltBiTree **root, zltBiTree *a, zltBiTree *b) {
   zltMemSwap(a, b, sizeof(zltBiTree));
-  if (parent) {
-    zltBiTreeMemb(parent, children)[a == zltBiTreeMemb(parent, rchd)] = b;
-  } else {
+  if (!a->parent) {
+    *root = a;
+  } else if (!b->parent) {
     *root = b;
   }
 }
 
-void zltBiTreeClean(void *tree, zltBiTreeDtor *dtor) {
+void zltBiTreeClean(zltBiTree *tree, zltBiTreeDtor *dtor) {
   if (!tree) {
     return;
   }
-  void *lchd = zltBiTreeMemb(tree, lchd);
-  void *rchd = zltBiTreeMemb(tree, rchd);
+  zltBiTree *lchd = tree->lchd;
+  zltBiTree *rchd = tree->rchd;
   dtor(tree);
   zltBiTreeClean(lchd, dtor);
   zltBiTreeClean(rchd, dtor);
 }
 
-void *zltBiTreeMostSide(const void *tree, int side) {
-  void *next = zltBiTreeMemb(tree, children)[side];
-  return next ? zltBiTreeMostSide(next, side) : (void *) tree;
+zltBiTree *zltBiTreeMostSide(const zltBiTree *tree, int side) {
+  zltBiTree *next = tree->children[side];
+  return next ? zltBiTreeMostSide(next, side) : (zltBiTree *) tree;
 }
 
 // iterators begin
-static void *nxy1(const void *tree, int xy);
+static zltBiTree *nxy1(const zltBiTree *tree, int xy);
 
-void *zltBiTreeNXY(const void *tree, int xy) {
-  void *x = zltBiTreeMemb(tree, children)[xy];
+zltBiTree *zltBiTreeNXY(const zltBiTree *tree, int xy) {
+  zltBiTree *x = tree->children[xy];
   if (x) {
     return x;
   }
-  void *y = zltBiTreeMemb(tree, children)[!xy];
+  zltBiTree *y = tree->children[!xy];
   if (y) {
     return y;
   }
   return nxy1(tree, xy);
 }
 
-void *nxy1(const void *tree, int xy) {
-  zltBiTree *parent = (zltBiTree *) zltBiTreeMemb(tree, parent);
+zltBiTree *nxy1(const zltBiTree *tree, int xy) {
+  zltBiTree *parent = tree->parent;
   if (!parent) {
     return NULL;
   }
@@ -52,18 +52,18 @@ void *nxy1(const void *tree, int xy) {
   return nxy1(parent, xy);
 }
 
-static void *xny1(const void *tree, int xy);
+static zltBiTree *xny1(const zltBiTree *tree, int xy);
 
-void *zltBiTreeXNY(const void *tree, int xy) {
-  void *y = zltBiTreeMemb(tree, children)[!xy];
+zltBiTree *zltBiTreeXNY(const zltBiTree *tree, int xy) {
+  zltBiTree *y = tree->children[!xy];
   if (y) {
     return zltBiTreeMostSide(y, xy);
   }
   return xny1(tree, xy);
 }
 
-void *xny1(const void *tree, int xy) {
-  zltBiTree *parent = (zltBiTree *) zltBiTreeMemb(tree, parent);
+zltBiTree *xny1(const zltBiTree *tree, int xy) {
+  zltBiTree *parent = tree->parent;
   if (!parent) {
     return NULL;
   }
@@ -73,12 +73,12 @@ void *xny1(const void *tree, int xy) {
   return xny1(parent, xy);
 }
 
-void *zltBiTreeXYN(const void *tree, int xy) {
-  zltBiTree *parent = (zltBiTree *) zltBiTreeMemb(tree, parent);
+zltBiTree *zltBiTreeXYN(const zltBiTree *tree, int xy) {
+  zltBiTree *parent = tree->parent;
   if (!parent) {
     return NULL;
   }
-  void *y = parent->children[!xy];
+  zltBiTree *y = parent->children[!xy];
   if (tree != y && y) {
     return zltBiTreeMostSide(y, xy);
   }
@@ -86,11 +86,11 @@ void *zltBiTreeXYN(const void *tree, int xy) {
 }
 // iterators end
 
-void *zltBiTreeRotate(void *tree, bool right) {
-  zltBiTree *parent = (zltBiTree *) zltBiTreeMemb(tree, parent);
-  zltBiTree *child = (zltBiTree *) zltBiTreeMemb(tree, children)[!right];
-  zltBiTreeMemb(tree, parent) = child;
-  zltBiTreeMemb(tree, children)[!right] = child->children[right];
+zltBiTree *zltBiTreeRotate(zltBiTree *tree, bool right) {
+  zltBiTree *parent = tree->parent;
+  zltBiTree *child = tree->children[!right];
+  tree->parent = child;
+  tree->children[!right] = child->children[right];
   child->parent = parent;
   child->children[right] = tree;
   if (parent) {
@@ -100,19 +100,19 @@ void *zltBiTreeRotate(void *tree, bool right) {
 }
 
 // find operations begin
-void *zltBiTreeFind(const void *tree, zltBiTreeCmpForFind *cmp, const void *data) {
+zltBiTree *zltBiTreeFind(const zltBiTree *tree, zltBiTreeCmpForFind *cmp, const void *data) {
   if (!tree) {
     return NULL;
   }
   int diff = cmp(data, tree);
   if (!diff) {
-    return (void *) tree;
+    return (zltBiTree *) tree;
   }
-  void *next = zltBiTreeMemb(tree, children)[diff > 0];
+  zltBiTree *next = tree->children[diff > 0];
   return zltBiTreeFind(next, cmp, data);
 }
 
-void **zltBiTreeFindForInsert(void **parent, void **tree, zltBiTreeCmpForFind *cmp, const void *data) {
+zltBiTree **zltBiTreeFindForInsert(zltBiTree **parent, zltBiTree **tree, zltBiTreeCmpForFind *cmp, const void *data) {
   if (!*tree) {
     return tree;
   }
@@ -121,7 +121,7 @@ void **zltBiTreeFindForInsert(void **parent, void **tree, zltBiTreeCmpForFind *c
     return tree;
   }
   *parent = *tree;
-  void **next = &zltBiTreeMemb(*tree, children)[diff > 0];
+  zltBiTree **next = &zltMemberOf(*tree, zltBiTree, children)[diff > 0];
   return zltBiTreeFindForInsert(parent, next, cmp, data);
 }
 // find operations end

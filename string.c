@@ -55,7 +55,7 @@ zltString zltStrTrimEnd(zltString str) {
   for (; left && isspace(*it); --it, --left) {
     // do nothing
   }
-  return zltStrMake(it, left);
+  return zltStrMake(str.data, left);
 }
 
 zltString zltStrToLong(long *dest, zltString src, size_t base, zltStrToULongFn *toULong) {
@@ -63,16 +63,23 @@ zltString zltStrToLong(long *dest, zltString src, size_t base, zltStrToULongFn *
     return src;
   }
   if (*src.data == '+') {
-    if (!(src.size > 1 && zltIsDigitChar(src.data[1], base))) {
-      return src;
-    }
-    return toULong((unsigned long *) dest, zltStrForward(src, 1), base);
-  }
-  if (*src.data == '-') {
-    if (!(src.size > 1 && zltIsDigitChar(src.data[1], base))) {
+    if (src.size == 1) {
       return src;
     }
     zltString s = toULong((unsigned long *) dest, zltStrForward(src, 1), base);
+    if (src.size - s.size == 1) {
+      return src;
+    }
+    return s;
+  }
+  if (*src.data == '-') {
+    if (src.size == 1) {
+      return src;
+    }
+    zltString s = toULong((unsigned long *) dest, zltStrForward(src, 1), base);
+    if (src.size - s.size == 1) {
+      return src;
+    }
     *dest = -*dest;
     return s;
   }
@@ -95,16 +102,23 @@ zltString zltStrToDouble(double *dest, zltString src, zltStrToUDoubleFn *toUDoub
     return src;
   }
   if (*src.data == '+') {
-    if (!(src.size > 1 && isdigit(src.data[1]))) {
-      return src;
-    }
-    return toUDouble(dest, zltStrForward(src, 1));
-  }
-  if (*src.data == '-') {
-    if (!(src.size > 1 && isdigit(src.data[1]))) {
+    if (src.size == 1) {
       return src;
     }
     zltString s = toUDouble(dest, zltStrForward(src, 1));
+    if (src.size - s.size == 1) {
+      return src;
+    }
+    return s;
+  }
+  if (*src.data == '-') {
+    if (src.size == 1) {
+      return src;
+    }
+    zltString s = toUDouble(dest, zltStrForward(src, 1));
+    if (src.size - s.size == 1) {
+      return src;
+    }
     *dest = -*dest;
     return s;
   }
