@@ -104,32 +104,32 @@ void beforeErase3(zltBiTree **root, zltRBTree *node) {
 // NB  SR  -> PB  YB -> PR  YB
 //    /  \   /  \      /  \_
 //   XB  YB NB  XB    NB  XB
-void beforeErase4(void **root, void *node, void *sibling, void *parent) {
-  bool right = node == zltBiTreeMemb(parent, rchd);
-  void *x = zltBiTreeMemb(sibling, children)[right];
-  zltBiTreeRotate(parent, right);
-  zltRBTreeMemb(sibling, red) = false;
-  zltRBTreeMemb(parent, red) = true;
-  if (*root == parent) {
-    *root = sibling;
+void beforeErase4(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent) {
+  bool right = node == (void *) parent->biTree.rchd;
+  zltRBTree *x = (zltRBTree *) sibling->biTree.children[right];
+  zltBiTreeRotate((zltBiTree *) parent, right);
+  sibling->red = false;
+  parent->red = true;
+  if (*root == (void *) parent) {
+    *root = (zltBiTree *) sibling;
   }
   beforeErase5(root, node, x, parent);
 }
 
-static void beforeErase6(void **root, void *node, void *sibling, void *parent);
-static void beforeErase7(void **root, void *node, void *sibling, void *parent);
-static void beforeErase8(void **root, void *node, void *sibling, void *parent);
+static void beforeErase6(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent);
+static void beforeErase7(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent);
+static void beforeErase8(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent);
 
-void beforeErase5(void **root, void *node, void *sibling, void *parent) {
-  void (*f)(void **root, void *node, void *sibling, void *parent);
-  bool right = node == zltBiTreeMemb(parent, rchd);
-  void *x = zltBiTreeMemb(sibling, children)[right];
-  if (x && zltRBTreeMemb(x, red)) {
+void beforeErase5(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent) {
+  void (*f)(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent);
+  bool right = node == (void *) parent->biTree.rchd;
+  zltRBTree *x = (zltRBTree *) sibling->biTree.children[right];
+  if (x && x->red) {
     f = beforeErase6;
     goto A;
   }
-  void *y = zltBiTreeMemb(sibling, children)[!right];
-  if (y && zltRBTreeMemb(y, red)) {
+  zltRBTree *y = (zltRBTree *) sibling->biTree.children[!right];
+  if (y && y->red) {
     f = beforeErase7;
     goto A;
   }
@@ -145,15 +145,15 @@ void beforeErase5(void **root, void *node, void *sibling, void *parent) {
 //   XR        UB  SB NB  UB  VB    NB  UB  VB
 //  /  \          /
 // UB  VB        VB
-void beforeErase6(void **root, void *node, void *sibling, void *parent) {
-  bool right = node == zltBiTreeMemb(parent, rchd);
-  void *x = zltBiTreeMemb(sibling, children)[right];
-  zltBiTreeRotate(sibling, !right);
-  zltBiTreeRotate(parent, right);
-  zltRBTreeMemb(x, red) = zltRBTreeMemb(parent, red);
-  zltRBTreeMemb(parent, red) = false;
-  if (*root == parent) {
-    *root = x;
+void beforeErase6(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent) {
+  bool right = node == (void *) parent->biTree.rchd;
+  zltRBTree *x = (zltRBTree *) sibling->biTree.children[right];
+  zltBiTreeRotate((zltBiTree *) sibling, !right);
+  zltBiTreeRotate((zltBiTree *) parent, right);
+  x->red = parent->red;
+  parent->red = false;
+  if (*root == (void *) parent) {
+    *root = (zltBiTree *) x;
   }
 }
 
@@ -162,15 +162,15 @@ void beforeErase6(void **root, void *node, void *sibling, void *parent) {
 // NB  SB  -> PC  YR -> PB  YB
 //    /  \   /  \      /  \_
 //   XB  YR NB  XB    NB  XB
-void beforeErase7(void **root, void *node, void *sibling, void *parent) {
-  bool right = node == zltBiTreeMemb(parent, rchd);
-  void *y = zltBiTreeMemb(sibling, children)[!right];
-  zltBiTreeRotate(parent, right);
-  zltRBTreeMemb(sibling, red) = zltRBTreeMemb(parent, red);
-  zltRBTreeMemb(y, red) = false;
-  zltRBTreeMemb(parent, red) = false;
-  if (*root == parent) {
-    *root = sibling;
+void beforeErase7(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent) {
+  bool right = node == (void *) parent->biTree.rchd;
+  zltRBTree *y = sibling->biTree.children[!right];
+  zltBiTreeRotate((zltBiTree *) parent, right);
+  sibling->red = parent->red;
+  y->red = false;
+  parent->red = false;
+  if (*root == (void *) parent) {
+    *root = (zltBiTree *) sibling;
   }
 }
 
@@ -179,35 +179,35 @@ void beforeErase7(void **root, void *node, void *sibling, void *parent) {
 // NB  SB -> NB  SR -> NB  SR
 //    /  \      /  \      /  \_
 //   XB  YB    XB  YB    XB  YB
-void beforeErase8(void **root, void *node, void *sibling, void *parent) {
-  zltRBTreeMemb(sibling, red) = true;
-  if (zltRBTreeMemb(parent, red)) {
-    zltRBTreeMemb(parent, red) = false;
+void beforeErase8(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent) {
+  sibling->red = true;
+  if (parent->red) {
+    parent->red = false;
   } else {
     beforeErase3(root, parent);
   }
 }
 // before erase operations end
 
-void zltRBTreeErase(void **root, void *node) {
-  void *parent = zltBiTreeMemb(node, parent);
-  void *child = zltBiTreeMemb(node, lchd);
+void zltRBTreeErase(zltBiTree **root, zltRBTree *node) {
+  zltRBTree *parent = (zltRBTree *) node->biTree.parent;
+  zltRBTree *child = (zltRBTree *) node->biTree.lchd;
   if (!child) {
-    child = zltBiTreeMemb(node, rchd);
+    child = (zltRBTree *) node->biTree.rchd;
   }
   if (parent) {
-    zltBiTreeMemb(parent, children)[node == zltBiTreeMemb(parent, rchd)] = child;
+    parent->biTree.children[node == (void *) parent->biTree.rchd] = (zltBiTree *) child;
   } else {
-    *root = child;
+    *root = (zltBiTree *) child;
   }
   if (child) {
-    zltBiTreeMemb(child, parent) = parent;
-    zltRBTreeMemb(child, red) = false;
+    child->biTree.parent = (zltBiTree *) parent;
+    child->red = false;
   }
 }
 
-void *zltRBTreeFindAndErase(void **root, zltBiTreeCmpForFind *cmp, const void *data) {
-  void *node = zltBiTreeFind(*root, cmp, data);
+zltRBTree *zltRBTreeFindAndErase(zltBiTree **root, zltBiTreeCmpForFind *cmp, const void *data) {
+  zltRBTree *node = (zltRBTree *) zltBiTreeFind(*root, cmp, data);
   if (!node) {
     return NULL;
   }
