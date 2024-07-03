@@ -1,12 +1,16 @@
 #include<string.h>
 #include"zlt/strtree.h"
 
-int zltStrTreeCmpForFind(const void *data, const void *tree) {
-  if (zltStrMemb(data, size) < zltStrTreeMemb(tree, value).size) {
+static inline int cmpForFind(const zltString *s, const zltStrTree *tree) {
+  if (s->size < tree->value.size) {
     return -1;
   }
-  if (zltStrMemb(data, size) > zltStrTreeMemb(tree, value).size) {
+  if (s->size > tree->value.size) {
     return 1;
   }
-  return strncmp(zltStrMemb(data, data), zltStrTreeMemb(tree, value).data, zltStrMemb(data, size));
+  return strncmp(s->data, tree->value.data, s->size);
+}
+
+int zltStrTreeCmpForFind(const void *data, const zltBiTree *tree) {
+  return cmpForFind((const zltString *) data, (const zltStrTree *) tree);
 }

@@ -1,4 +1,5 @@
-#include"dblink.h"
+#include<stddef.h>
+#include"zlt/dblink.h"
 
 void zltDbLinkErase(zltDbLink *link, zltDbLink *last) {
   link->prev->next = last->next;

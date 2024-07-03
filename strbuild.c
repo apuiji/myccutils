@@ -9,4 +9,7 @@ bool zltStrBuildWrite(zltStack *dest, zltStack *buf, const void *data, size_t si
   }
 }
 
-bool zltStrBuildFlush(zltStack *dest, zltStack *buf);
+bool zltStrBuildFlush(zltStack *dest, zltStack *buf) {
+  // TODO
+  return false;
+}

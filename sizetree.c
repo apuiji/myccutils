@@ -1,10 +1,11 @@
 #include"zlt/sizetree.h"
+#include"zlt/xyz.h"
 
-int zltSizeTreeCmpForFind(const void *value, const void *tree) {
-  if (zltPointTo(value, size_t) < zltSizeTreeMemb(tree, value)) {
+int zltSizeTreeCmpForFind(const void *value, const zltBiTree *tree) {
+  if (*(size_t *) value < zltMemberOf(tree, zltSizeTree, value)) {
     return -1;
   }
-  if (zltPointTo(value, size_t) > zltSizeTreeMemb(tree, value)) {
+  if (*(size_t *) value > zltMemberOf(tree, zltSizeTree, value)) {
     return 1;
   }
   return 0;

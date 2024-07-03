@@ -12,5 +12,5 @@ zltLink *zltLinkFindUntil(const zltLink *link, const zltLink *end) {
   while (link->next != end) {
     link = link->next;
   }
-  return link;
+  return (zltLink *) link;
 }

@@ -164,7 +164,7 @@ void beforeErase6(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTr
 //   XB  YR NB  XB    NB  XB
 void beforeErase7(zltBiTree **root, zltRBTree *node, zltRBTree *sibling, zltRBTree *parent) {
   bool right = node == (void *) parent->biTree.rchd;
-  zltRBTree *y = sibling->biTree.children[!right];
+  zltRBTree *y = (zltRBTree *) sibling->biTree.children[!right];
   zltBiTreeRotate((zltBiTree *) parent, right);
   sibling->red = parent->red;
   y->red = false;
