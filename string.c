@@ -22,15 +22,11 @@ int zltIsDigitChar(int c, size_t base) {
   return -1;
 }
 
-bool zltStrEq(zltString a, zltString b) {
-  return a.size == b.size && !strncmp(a.data, b.data, a.size);
-}
-
-int zltStrCmp(zltString a, zltString b) {
+int zltStrCmp(zltString a, zltString b, strncmpFn *cmp) {
   if (a.size > b.size) {
-    return -zltStrCmp(b, a);
+    return -zltStrCmp(b, a, cmp);
   }
-  int diff = strncmp(a.data, b.data, a.size);
+  int diff = cmp(a.data, b.data, a.size);
   if (diff > 0) {
     return 1;
   }
@@ -56,6 +52,12 @@ zltString zltStrTrimEnd(zltString str) {
     // do nothing
   }
   return zltStrMake(str.data, left);
+}
+
+void zltStrToCase(zltString dest, zltString src, tocaseFn *tocase) {
+  for (; dest.size && src.size; ++dest.data, --dest.size, ++src.data, --src.size) {
+    *dest.data = tocase(*src.data);
+  }
 }
 
 zltString zltStrToLong(long *dest, zltString src, size_t base, zltStrToULongFn *toULong) {
