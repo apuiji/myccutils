@@ -87,6 +87,43 @@ zltString zltStrRevFindIf(zltString src, zltStrPredForFind *pred) {
   }
   return s;
 }
+
+// kmp begin
+static void kmpNextMake(size_t *dest, size_t n, const char *a, const char *b, size_t left);
+
+void zltKMPNextMake(size_t *dest, zltString src) {
+  *dest = 0;
+  kmpNextMake(dest + 1, 0, src.data, src.data + 1, src.size - 1);
+}
+
+void kmpNextMake(size_t *dest, size_t n, const char *a, const char *b, size_t left) {
+  if (!left) {
+    return;
+  }
+  if (*a == *b) {
+    *dest = ++n;
+    kmpNextMake(dest + 1, n, a + 1, b + 1, left - 1);
+    return
+  }
+  kmpNextMake(dest, 0, a - n, b, left);
+}
+
+static zltString kmpFind(zltString src, zltString pat, size_t *nextv, int i);
+
+zltString zltStrKMPFind(zltString src, zltString pat, size_t *nextv) {
+  return kmpFind(src, pat, nextv, 0);
+}
+
+zltString kmpFind(zltString src, zltString pat, size_t *nextv, int i) {
+  if (!src.left) {
+    return src;
+  }
+  if (*src.data == pat.data[i]) {
+    return kmpFind(zltStrForward(src, 1), pat, nextv, nextc, i + 1);
+  }
+  return kmpFind(src, pat, nextv, i ? nextv[i - 1] : 0);
+}
+// kmp end
 // find operations end
 
 void zltStrToCase(zltString dest, zltString src, tocaseFn *tocase) {
