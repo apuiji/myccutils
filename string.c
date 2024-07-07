@@ -22,6 +22,7 @@ int zltIsDigitChar(int c, size_t base) {
   return -1;
 }
 
+// comparisons begin
 int zltStrCmp(zltString a, zltString b, strncmpFn *cmp) {
   if (a.size > b.size) {
     return -zltStrCmp(b, a, cmp);
@@ -36,6 +37,26 @@ int zltStrCmp(zltString a, zltString b, strncmpFn *cmp) {
   return 0;
 }
 
+static inline size_t strSameChar(size_t dest, const char *a, const char *b, size_t left) {
+  for (; left && *a == *b; ++a, ++b, --left) {
+    ++dest;
+  }
+  return dest;
+}
+
+static inline size_t strSameInt(size_t dest, const int *a, const int *b, size_t left) {
+  for (; left >= sizeof(int) && *a == *b; ++a, ++b, left -= sizeof(int)) {
+    dest += sizeof(int);
+  }
+  return strSameInt(dest, (const char *) a, (const char *) b, left);
+}
+
+size_t zltStrSame(zltString a, zltString b) {
+  return strSameInt(0, (const int *) a.data, (const int *) b.data, a.size < b.size ? a.size : b.size);
+}
+// comparisons end
+
+// trim operations begin
 zltString zltStrTrimStart(zltString str) {
   const char *it = str.data;
   size_t left = str.size;
@@ -53,6 +74,24 @@ zltString zltStrTrimEnd(zltString str) {
   }
   return zltStrMake(str.data, left);
 }
+// trim operations end
+
+// find operations begin
+zltString zltStrFindIf(zltString src, zltStrPredForFind *pred) {
+  for (; src.size && !pred(src); ++src.data, --src.size) {
+    // do nothing
+  }
+  return src;
+}
+
+zltString zltStrRevFindIf(zltString src, zltStrPredForFind *pred) {
+  zltString s = zltStrEnd(src);
+  for (; s.size < src.size && !pred(s); --s.data, ++s.size) {
+    // do nothing
+  }
+  return s;
+}
+// find operations end
 
 void zltStrToCase(zltString dest, zltString src, tocaseFn *tocase) {
   for (; dest.size && src.size; ++dest.data, --dest.size, ++src.data, --src.size) {
@@ -60,6 +99,7 @@ void zltStrToCase(zltString dest, zltString src, tocaseFn *tocase) {
   }
 }
 
+// string to number operations begin
 zltString zltStrToLong(long *dest, zltString src, size_t base, zltStrToULongFn *toULong) {
   if (!src.size) {
     return src;
@@ -174,3 +214,4 @@ zltString strtoud3(double *dest, zltString src) {
   *dest *= pow(10, e);
   return s;
 }
+// string to number operations end
