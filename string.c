@@ -37,22 +37,18 @@ int zltStrCmp(zltString a, zltString b, strncmpFn *cmp) {
   return 0;
 }
 
-static inline size_t strSameChar(size_t dest, const char *a, const char *b, size_t left) {
-  for (; left && *a == *b; ++a, ++b, --left) {
-    ++dest;
-  }
-  return dest;
+static size_t strSame(size_t dest, const char *a, const char *b, size_t left, size_t once, strncmpFn *cmp);
+
+size_t zltStrSame(zltString a, zltString b, strncmpFn *cmp) {
+  return strSame(0, a.data, b.data, a.size < b.size ? a.size : b.size, 1 << 8, cmp);
 }
 
-static inline size_t strSameInt(size_t dest, const int *a, const int *b, size_t left) {
-  for (; left >= sizeof(int) && *a == *b; ++a, ++b, left -= sizeof(int)) {
-    dest += sizeof(int);
+size_t strSame(size_t dest, const char *a, const char *b, size_t left, size_t once, strncmpFn *cmp) {
+  for (; left >= once && !cmp(a, b, once); a += once, b += once, left -= once) {
+    dest += once;
   }
-  return strSameInt(dest, (const char *) a, (const char *) b, left);
-}
-
-size_t zltStrSame(zltString a, zltString b) {
-  return strSameInt(0, (const int *) a.data, (const int *) b.data, a.size < b.size ? a.size : b.size);
+  once = once >> 1;
+  return once ? strSame(dest, a, b, left, once) : dest;
 }
 // comparisons end
 
