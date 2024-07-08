@@ -85,7 +85,7 @@ zltString zltStrRevFindIf(zltString src, zltStrPredForFind *pred) {
   for (; s.size < src.size && !pred(s); --s.data, ++s.size) {
     // do nothing
   }
-  return s;
+  return zltStrMakeBE(src.data, s.data);
 }
 
 // kmp begin
