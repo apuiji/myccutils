@@ -1,41 +1,23 @@
 #include"zlt/fspath.h"
 
-#ifdef WIN32
+static zltString parent(const char *begin, zltString src, zltString sep);
 
-static bool startsWithSep(zltString src) {
-  return src.size && (*src.data == '/' || *src.data == '\\');
+zltString zltFsPathParent(zltString path, zltString sep) {
+  return parent(path.data, path, sep);
 }
 
-static bool endsWithSep(zltString src) {
-  if (!src.size) {
-    return false;
+zltString parent(const char *begin, zltString src, zltString sep) {
+  zltString s = zltStrFindStr(src, sep, strncmp);
+  if (!s.size) {
+    return zltStrMakeBE(begin, src.data);
   }
-  const char *c = src.data + src.size;
-  return *c == '/' || *c == '\\';
+  return parent(begin, s, sep);
 }
 
-static zltString parent(zltString path);
-
-zltString zltFsPathParent(zltString path) {
-  if (zltStrEndsWith(path, zltStrMakeSta(zltFsPathSep))) {
-    return zltFsPathParent(zltStrEndBack(path, zltFsPathSepLeng));
+zltString zltFsPathName(zltString path, zltString sep) {
+  zltString s = zltStrFindStr(path, sep);
+  if (!s.size) {
+    return path;
   }
-  return parent(path);
+  return zltFsPathName(s, sep);
 }
-
-static bool startsWithSep(zltString src) {
-  return zltStrStartsWith(path, zltStrMakeSta(zltFsPathSep));
-}
-
-zltString parent(zltString path) {
-  zltString s = zltStrRevFindIf(path, startsWithSep);
-}
-
-#else
-
-zltString zltFsPathParent(zltString path) {
-  // TODO
-  return (zltString) {};
-}
-
-#endif

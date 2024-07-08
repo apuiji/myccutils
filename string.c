@@ -73,6 +73,20 @@ zltString zltStrTrimEnd(zltString str) {
 // trim operations end
 
 // find operations begin
+zltString zltStrFindChar(zltString src, int c) {
+  for (; src.size && *src.data != c; ++src.data, --src.size) {
+    // do nothing
+  }
+  return src;
+}
+
+zltString zltStrFindStr(zltString src, zltString str, strncmpFn *cmp) {
+  for (; src.size && zltStrStartsWith(src, str, cmp); ++src.data, --src.size) {
+    // do nothing
+  }
+  return src;
+}
+
 zltString zltStrFindIf(zltString src, zltStrPredForFind *pred) {
   for (; src.size && !pred(src); ++src.data, --src.size) {
     // do nothing
