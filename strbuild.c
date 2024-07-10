@@ -1,27 +1,28 @@
 #include"zlt/strbuild.h"
 
-zltString zltStrBuildWrite(zltStack *dest, zltStack *buf, zltString src) {
-  if (src.size <= buf->left) {
-    zltStackPushStr(buf, src);
+zltString zltStrBuildWrite(zltStrBuild *sb, zltString src) {
+  if (src.size <= sb->buf.left) {
+    zltStackPushStr(&sb->buf, src);
     return zltStrEnd(src);
   }
-  size_t n = buf->left;
-  zltStackPush(buf, src.data, n);
+  size_t n = sb->buf.left;
+  zltStackPush(&sb->buf, src.data, n);
   src = zltStrForward(src, n);
-  if (!zltStrBuildFlush(dest, buf)) {
+  if (!zltStrBuildFlush(sb)) {
     return src;
   }
-  return zltStrBuildWrite(dest, buf, src);
+  return zltStrBuildWrite(sb, src);
 }
 
-bool zltStrBuildFlush(zltStack *dest, zltStack *buf) {
-  size_t n = zltStackSize(buf);
-  if (n > dest->left) {
-    size_t m = zltStackSize(dest);
-    if (!zltStackReCapacity(dest, m + n)) {
+bool zltStrBuildFlush(zltStrBuild *sb) {
+  size_t n = zltStackSize(&sb->buf);
+  if (n > sb->dest.left) {
+    size_t m = zltStackSize(&sb->dest);
+    if (!zltStackReCapacity(&sb->dest, m + n)) {
       return false;
     }
   }
-  zltStackPushStr(dest, zltStrMake(buf->data, n));
+  zltStackPushStr(&sb->dest, zltStrMake(sb->buf.data, n));
+  zltStackPop(&sb->buf, n);
   return true;
 }

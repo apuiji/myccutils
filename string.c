@@ -48,7 +48,7 @@ size_t strSame(size_t dest, const char *a, const char *b, size_t left, size_t on
     dest += once;
   }
   once = once >> 1;
-  return once ? strSame(dest, a, b, left, once) : dest;
+  return once ? strSame(dest, a, b, left, once, cmp) : dest;
 }
 // comparisons end
 
@@ -117,7 +117,7 @@ void kmpNextMake(size_t *dest, size_t n, const char *a, const char *b, size_t le
   if (*a == *b) {
     *dest = ++n;
     kmpNextMake(dest + 1, n, a + 1, b + 1, left - 1);
-    return
+    return;
   }
   kmpNextMake(dest, 0, a - n, b, left);
 }
@@ -129,11 +129,11 @@ zltString zltStrKMPFind(zltString src, zltString pat, size_t *nextv) {
 }
 
 zltString kmpFind(zltString src, zltString pat, size_t *nextv, int i) {
-  if (!src.left) {
+  if (!src.size) {
     return src;
   }
   if (*src.data == pat.data[i]) {
-    return kmpFind(zltStrForward(src, 1), pat, nextv, nextc, i + 1);
+    return kmpFind(zltStrForward(src, 1), pat, nextv, i + 1);
   }
   return kmpFind(src, pat, nextv, i ? nextv[i - 1] : 0);
 }

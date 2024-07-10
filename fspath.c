@@ -15,7 +15,7 @@ zltString parent(const char *begin, zltString src, zltString sep) {
 }
 
 zltString zltFsPathName(zltString path, zltString sep) {
-  zltString s = zltStrFindStr(path, sep);
+  zltString s = zltStrFindStr(path, sep, strncmp);
   if (!s.size) {
     return path;
   }
